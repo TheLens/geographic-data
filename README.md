@@ -23,28 +23,28 @@ Click the links below to see previews of each geography.
 
 |               |Geography                                                                                                                                           |Shapefile|GeoJSON |TopoJSON|
 |---------------|----------------------------------------------------------------------------------------------------------------------------------------------------|--------:|-------:|-------:|
-|__New Orleans__|[City limits](blob/master/exports/topojson/parishes/new-orleans.json)                                                                                           | 43   kB | 72   kB| 21   kB|
-|               |[City limits (simplified)](blob/master/exports/topojson/parishes/new-orleans-simplified.json)                                                                   |  5   kB |  9   kB|  3   kB|
-|               |[City limits, without Lake Pontchartrain](blob/master/exports/topojson/parishes/new-orleans-no-lake.json)                                                       |116   kB |195   kB| 49   kB|
-|               |[City limits, without Lake Pontchartrain (simplified)](blob/master/exports/topojson/parishes/new-orleans-no-lake-simplified.json)                               | 10   kB | 17   kB|  6   kB|
-|               |[City limits, without Lake Pontchartrain and Mississippi River](blob/master/exports/topojson/parishes/new-orleans-no-lake-no-river.json)                        |131   kB |219   kB| 55   kB|
-|               |[City limits, without Lake Pontchartrain and Mississippi River (simplified)](blob/master/exports/topojson/parishes/new-orleans-no-lake-no-river-simplified.json)| 11   kB | 18   kB|  6   kB|
-|               |[Neighborhoods](blob/master/exports/topojson/neighborhoods/new-orleans.json)                                                                                    |239   kB |658   kB| 95   kB|
-|               |[Neighborhoods (simplified)](blob/master/exports/topojson/neighborhoods/new-orleans-simplified.json)                                                            | 45   kB |121   kB| 30   kB|
-|               |[Voting precincts](blob/master/exports/topojson/precincts/new-orleans.json)                                                                                     |545   kB |  1.6 MB|265   kB|
-|               |[Voting precincts (simplified)](blob/master/exports/topojson/precincts/new-orleans-simplified.json)                                                             | 70   kB |192   kB| 78   kB|
-|__Louisiana__  |[Parishes](blob/master/exports/topojson/parishes/louisiana.json)                                                                                                |  7.5 MB | 12.5 MB|  1.3 MB|
-|               |[Parishes (simplified)](blob/master/exports/topojson/parishes/louisiana-simplified.json)                                                                        |626   kB |  1.1 MB|308   kB|
-|               |[Voting precincts*](blob/master/exports/topojson/precincts/louisiana.json)                                                                                      | 31.4 MB | 89.6 MB|  5.9 MB|
-|               |[Voting precincts (simplified)](blob/master/exports/topojson/precincts/louisiana-simplified.json)                                                               |  3.6 MB | 10.1 MB|  2.2 MB|
-|               |[BESE districts](blob/master/exports/topojson/bese/bese.json)                                                                                                   |  2.3 MB |  6.3 MB|446   kB|
-|               |[BESE districts (simplified)](blob/master/exports/topojson/bese/bese-simplified.json)                                                                           |260   kB |728   kB| 91   kB|
-|__Water__      |[Mississippi River](blob/master/exports/topojson/water/mississippi-river.json)                                                                                  |968   kB |  1.5 MB|242   kB|
-|               |[Mississippi River (simplified)](blob/master/exports/topojson/water/mississippi-river-simplified.json)                                                          | 73   kB |123   kB| 36   kB|
-|               |[Lake Pontchartrain](blob/master/exports/topojson/water/lake-pontchartrain.json)                                                                                |203   kB |340   kB| 78   kB|
-|               |[Lake Pontchartrain (simplified)](blob/master/exports/topojson/water/lake-pontchartrain-simplified.json)                                                        | 13   kB | 22   kB|  7   kB|
-|               |[Gulf of Mexico](blob/master/exports/topojson/water/gulf-of-mexico-simplified.json)                                                                             |  4.4 MB |  7.4 MB|  1.1 MB|
-|               |[Gulf of Mexico (simplified)](blob/master/exports/topojson/water/gulf-of-mexico-simplified.json)                                                                |667   kB |  1.1 MB|326   kB|
+|__New Orleans__|[City limits](exports/topojson/parishes/orleans.json)                                                                                           | 43   kB | 72   kB| 21   kB|
+|               |[City limits (simplified)](exports/topojson/parishes/orleans-simplified.json)                                                                   |  5   kB |  9   kB|  3   kB|
+|               |[City limits, without Lake Pontchartrain](exports/topojson/parishes/orleans-no-lake.json)                                                       |116   kB |195   kB| 49   kB|
+|               |[City limits, without Lake Pontchartrain (simplified)](exports/topojson/parishes/orleans-no-lake-simplified.json)                               | 10   kB | 17   kB|  6   kB|
+|               |[City limits, without Lake Pontchartrain and Mississippi River](exports/topojson/parishes/orleans-no-lake-no-river.json)                        |131   kB |219   kB| 55   kB|
+|               |[City limits, without Lake Pontchartrain and Mississippi River (simplified)](exports/topojson/parishes/orleans-no-lake-no-river-simplified.json)| 11   kB | 18   kB|  6   kB|
+|               |[Neighborhoods](exports/topojson/neighborhoods/new-orleans.json)                                                                                    |239   kB |658   kB| 95   kB|
+|               |[Neighborhoods (simplified)](exports/topojson/neighborhoods/new-orleans-simplified.json)                                                            | 45   kB |121   kB| 30   kB|
+|               |[Voting precincts](exports/topojson/precincts/new-orleans.json)                                                                                     |545   kB |  1.6 MB|265   kB|
+|               |[Voting precincts (simplified)](exports/topojson/precincts/new-orleans-simplified.json)                                                             | 70   kB |192   kB| 78   kB|
+|__Louisiana__  |[Parishes](exports/topojson/parishes/louisiana.json)                                                                                                |  7.5 MB | 12.5 MB|  1.3 MB|
+|               |[Parishes (simplified)](exports/topojson/parishes/louisiana-simplified.json)                                                                        |626   kB |  1.1 MB|308   kB|
+|               |[Voting precincts*](exports/topojson/precincts/louisiana.json)                                                                                      | 31.4 MB | 89.6 MB|  5.9 MB|
+|               |[Voting precincts (simplified)](exports/topojson/precincts/louisiana-simplified.json)                                                               |  3.6 MB | 10.1 MB|  2.2 MB|
+|               |[BESE districts](exports/topojson/bese/bese.json)                                                                                                   |  2.3 MB |  6.3 MB|446   kB|
+|               |[BESE districts (simplified)](exports/topojson/bese/bese-simplified.json)                                                                           |260   kB |728   kB| 91   kB|
+|__Water__      |[Mississippi River](exports/topojson/water/mississippi-river.json)                                                                                  |968   kB |  1.5 MB|242   kB|
+|               |[Mississippi River (simplified)](exports/topojson/water/mississippi-river-simplified.json)                                                          | 73   kB |123   kB| 36   kB|
+|               |[Lake Pontchartrain](exports/topojson/water/lake-pontchartrain.json)                                                                                |203   kB |340   kB| 78   kB|
+|               |[Lake Pontchartrain (simplified)](exports/topojson/water/lake-pontchartrain-simplified.json)                                                        | 13   kB | 22   kB|  7   kB|
+|               |[Gulf of Mexico](exports/topojson/water/gulf-of-mexico-simplified.json)                                                                             |  4.4 MB |  7.4 MB|  1.1 MB|
+|               |[Gulf of Mexico (simplified)](exports/topojson/water/gulf-of-mexico-simplified.json)                                                                |667   kB |  1.1 MB|326   kB|
 
 *__Note:__ The Louisiana precincts file from the House of Representatives is almost always out of date, so only use this file for historical data. This would not be suitable for an election night live data feed because the parcel shapes won't match.
 

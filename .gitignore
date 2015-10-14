@@ -1,0 +1,7 @@
+scripts
+temp
+tmp
+
+.DS_Store
+*.pyc
+

@@ -1,17 +1,832 @@
 
 .SECONDARY:
 
-.PHONY: bese neighborhoods parishes precincts water
+.PHONY: bese fq_economic_development_district help neighborhoods opsb parishes precincts water
 
-default:
-	@echo There is no default command. Select one of the following:
-	@echo '  bese          -- Creates files for Board of Elementary and Secondary Education districts.'
-	@echo '  neighborhoods -- Creates neighborhood files (Orleans Parish).'
-	@echo '  parishes      -- Creates parish files (statewide and Orleans Parish).'
-	@echo '  precincts     -- Creates precinct files (Orleans Parish).'
-	@echo '  water         -- Creates water files (Gulf of Mexico, Lake Pontchartrain and Mississippi River).'
+help:
+	@echo There is no default command. Choose from these commands:
+	@echo '  bese                             -- Creates files for Board of Elementary and Secondary Education districts.'
+	@echo '  fq_economic_development_district -- Creates files for French Quarter Economic Development District.'
+	@echo '  help                             -- Show available commands.'
+	@echo '  neighborhoods                    -- Creates neighborhood files (Orleans Parish).'
+	@echo '  opsb                             -- Creates files for Orleans Parish School Board districts.'
+	@echo '  parishes                         -- Creates parish files (statewide and Orleans Parish).'
+	@echo '  precincts                        -- Creates precinct files (Orleans Parish).'
+	@echo '  water                            -- Creates water files (Gulf of Mexico, Lake Pontchartrain and Mississippi River).'
 
-all: water parishes precincts neighborhoods bese
+all: water \
+	parishes \
+	precincts \
+	neighborhoods \
+	bese \
+	fq_economic_development_district \
+	opsb
+
+###########################################
+#                                         #
+#  Orleans Parish School Board districts  #
+#                                         #
+###########################################
+
+# Download OPSB .zip files
+zip/opsb/precinct-5-8-lakeside.zip:
+	@# Hand-made file
+	@mkdir -p $(dir $@)
+	@curl -sS -o $@.download 'https://s3-us-west-2.amazonaws.com/projects.thelensnola.org/geographic-data/hand-made/opsb/$(notdir $@)'
+	@mv $@.download $@
+zip/opsb/precinct-5-8-riverside.zip:
+	@# Hand-made file
+	@mkdir -p $(dir $@)
+	@curl -sS -o $@.download 'https://s3-us-west-2.amazonaws.com/projects.thelensnola.org/geographic-data/hand-made/opsb/$(notdir $@)'
+	@mv $@.download $@
+zip/opsb/precinct-7-12-lakeside.zip:
+	@# Hand-made file
+	@mkdir -p $(dir $@)
+	@curl -sS -o $@.download 'https://s3-us-west-2.amazonaws.com/projects.thelensnola.org/geographic-data/hand-made/opsb/$(notdir $@)'
+	@mv $@.download $@
+zip/opsb/precinct-7-12-riverside.zip:
+	@# Hand-made file
+	@mkdir -p $(dir $@)
+	@curl -sS -o $@.download 'https://s3-us-west-2.amazonaws.com/projects.thelensnola.org/geographic-data/hand-made/opsb/$(notdir $@)'
+	@mv $@.download $@
+
+# Unzip data
+shp/opsb/precinct-5-8-lakeside.shp: zip/opsb/precinct-5-8-lakeside.zip
+	@mkdir -p $(dir $@)
+	@unzip -q -o -d $(dir $@) $<
+shp/opsb/precinct-5-8-riverside.shp: zip/opsb/precinct-5-8-riverside.zip
+	@mkdir -p $(dir $@)
+	@unzip -q -o -d $(dir $@) $<
+shp/opsb/precinct-7-12-lakeside.shp: zip/opsb/precinct-7-12-lakeside.zip
+	@mkdir -p $(dir $@)
+	@unzip -q -o -d $(dir $@) $<
+shp/opsb/precinct-7-12-riverside.shp: zip/opsb/precinct-7-12-riverside.zip
+	@mkdir -p $(dir $@)
+	@unzip -q -o -d $(dir $@) $<
+
+exports/shp/opsb/opsb-district-1-precincts.shp: exports/shp/precincts/new-orleans.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-where 'PRECINCTID = "9-1" OR \
+				PRECINCTID = "9-3" OR \
+				PRECINCTID = "9-4" OR \
+				PRECINCTID = "9-5" OR \
+				PRECINCTID = "9-6" OR \
+				PRECINCTID = "9-7" OR \
+				PRECINCTID = "9-8" OR \
+				PRECINCTID = "9-32" OR \
+				PRECINCTID = "9-35" OR \
+				PRECINCTID = "9-35A" OR \
+				PRECINCTID = "9-36" OR \
+				PRECINCTID = "9-36B" OR \
+				PRECINCTID = "9-37" OR \
+				PRECINCTID = "9-38" OR \
+				PRECINCTID = "9-38A" OR \
+				PRECINCTID = "9-39" OR \
+				PRECINCTID = "9-39B" OR \
+				PRECINCTID = "9-40" OR \
+				PRECINCTID = "9-40A" OR \
+				PRECINCTID = "9-40C" OR \
+				PRECINCTID = "9-41" OR \
+				PRECINCTID = "9-41A" OR \
+				PRECINCTID = "9-41B" OR \
+				PRECINCTID = "9-41C" OR \
+				PRECINCTID = "9-41D" OR \
+				PRECINCTID = "9-43H" OR \
+				PRECINCTID = "9-43M" OR \
+				PRECINCTID = "9-43N" OR \
+				PRECINCTID = "9-44" OR \
+				PRECINCTID = "9-44D" OR \
+				PRECINCTID = "9-44E" OR \
+				PRECINCTID = "9-44F" OR \
+				PRECINCTID = "9-44G" OR \
+				PRECINCTID = "9-44I" OR \
+				PRECINCTID = "9-44J" OR \
+				PRECINCTID = "9-44L" OR \
+				PRECINCTID = "9-44M" OR \
+				PRECINCTID = "9-44N" OR \
+				PRECINCTID = "9-44O" OR \
+				PRECINCTID = "9-44P" OR \
+				PRECINCTID = "9-44Q" OR \
+				PRECINCTID = "9-45" OR \
+				PRECINCTID = "9-45A"'
+	@ogrinfo $@ -sql "ALTER TABLE opsb-district-1-precincts ADD COLUMN DISTRICT varchar(1)"
+	@ogrinfo $@ -dialect sqlite -sql "UPDATE 'opsb-district-1-precincts' SET DISTRICT = '1'"
+exports/shp/opsb/opsb-district-1.shp: exports/shp/opsb/opsb-district-1-precincts.shp
+	@# Buffer is to remove slivers that were forming inside the district shapes.
+	@ogr2ogr $@ $< -dialect sqlite -sql "SELECT st_union(ST_Buffer(GEOMETRY, 0.0000001)) AS geometry, precincts.* FROM 'opsb-district-1-precincts' AS precincts"
+
+exports/shp/opsb/opsb-district-2-precincts.shp: exports/shp/precincts/new-orleans.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-where 'PRECINCTID = "8-4" OR \
+				PRECINCTID = "8-6" OR \
+				PRECINCTID = "8-7" OR \
+				PRECINCTID = "8-8" OR \
+				PRECINCTID = "8-9" OR \
+				PRECINCTID = "8-12" OR \
+				PRECINCTID = "8-13" OR \
+				PRECINCTID = "8-14" OR \
+				PRECINCTID = "8-15" OR \
+				PRECINCTID = "8-19" OR \
+				PRECINCTID = "8-20" OR \
+				PRECINCTID = "8-21" OR \
+				PRECINCTID = "8-22" OR \
+				PRECINCTID = "8-23" OR \
+				PRECINCTID = "8-24" OR \
+				PRECINCTID = "8-30" OR \
+				PRECINCTID = "9-10" OR \
+				PRECINCTID = "9-17" OR \
+				PRECINCTID = "9-19" OR \
+				PRECINCTID = "9-21" OR \
+				PRECINCTID = "9-23" OR \
+				PRECINCTID = "9-25" OR \
+				PRECINCTID = "9-26" OR \
+				PRECINCTID = "9-28" OR \
+				PRECINCTID = "9-28C" OR \
+				PRECINCTID = "9-28E" OR \
+				PRECINCTID = "9-29" OR \
+				PRECINCTID = "9-30" OR \
+				PRECINCTID = "9-30A" OR \
+				PRECINCTID = "9-31" OR \
+				PRECINCTID = "9-31A" OR \
+				PRECINCTID = "9-31B" OR \
+				PRECINCTID = "9-31D" OR \
+				PRECINCTID = "9-33" OR \
+				PRECINCTID = "9-34A" OR \
+				PRECINCTID = "9-42" OR \
+				PRECINCTID = "9-42C" OR \
+				PRECINCTID = "9-43A" OR \
+				PRECINCTID = "9-43B" OR \
+				PRECINCTID = "9-43C" OR \
+				PRECINCTID = "9-43E" OR \
+				PRECINCTID = "9-43F" OR \
+				PRECINCTID = "9-43G" OR \
+				PRECINCTID = "9-43I" OR \
+				PRECINCTID = "9-43J" OR \
+				PRECINCTID = "9-43K" OR \
+				PRECINCTID = "9-43L" OR \
+				PRECINCTID = "9-44A" OR \
+				PRECINCTID = "9-44B"'
+	@ogrinfo $@ -sql "ALTER TABLE opsb-district-2-precincts ADD COLUMN DISTRICT varchar(1)"
+	@ogrinfo $@ -dialect sqlite -sql "UPDATE 'opsb-district-2-precincts' SET DISTRICT = '2'"
+exports/shp/opsb/opsb-district-2.shp: exports/shp/opsb/opsb-district-2-precincts.shp
+	@# Buffer is to remove slivers that were forming inside the district shapes.
+	@ogr2ogr $@ $< -dialect sqlite -sql "SELECT st_union(ST_Buffer(GEOMETRY, 0.0000001)) AS geometry, precincts.* FROM 'opsb-district-2-precincts' AS precincts"
+
+shp/opsb/opsb-district-3-precincts-untrimmed.shp: exports/shp/precincts/new-orleans.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-where 'PRECINCTID = "3-12" OR \
+				PRECINCTID = "3-14" OR \
+				PRECINCTID = "3-15" OR \
+				PRECINCTID = "3-18" OR \
+				PRECINCTID = "3-19" OR \
+				PRECINCTID = "3-20" OR \
+				PRECINCTID = "4-5" OR \
+				PRECINCTID = "4-6" OR \
+				PRECINCTID = "4-7" OR \
+				PRECINCTID = "4-8" OR \
+				PRECINCTID = "4-9" OR \
+				PRECINCTID = "4-11" OR \
+				PRECINCTID = "4-14" OR \
+				PRECINCTID = "4-15" OR \
+				PRECINCTID = "4-17" OR \
+				PRECINCTID = "4-17A" OR \
+				PRECINCTID = "4-18" OR \
+				PRECINCTID = "4-20" OR \
+				PRECINCTID = "4-21" OR \
+				PRECINCTID = "4-22" OR \
+				PRECINCTID = "4-23" OR \
+				PRECINCTID = "5-8" OR \
+				PRECINCTID = "5-9" OR \
+				PRECINCTID = "5-10" OR \
+				PRECINCTID = "5-11" OR \
+				PRECINCTID = "5-12" OR \
+				PRECINCTID = "5-13" OR \
+				PRECINCTID = "5-15" OR \
+				PRECINCTID = "5-16" OR \
+				PRECINCTID = "5-17" OR \
+				PRECINCTID = "5-18" OR \
+				PRECINCTID = "6-9" OR \
+				PRECINCTID = "7-12" OR \
+				PRECINCTID = "7-17" OR \
+				PRECINCTID = "7-18" OR \
+				PRECINCTID = "7-19" OR \
+				PRECINCTID = "7-30" OR \
+				PRECINCTID = "7-32" OR \
+				PRECINCTID = "7-33" OR \
+				PRECINCTID = "7-34" OR \
+				PRECINCTID = "7-35" OR \
+				PRECINCTID = "7-37" OR \
+				PRECINCTID = "7-37A" OR \
+				PRECINCTID = "7-40" OR \
+				PRECINCTID = "7-41" OR \
+				PRECINCTID = "7-42" OR \
+				PRECINCTID = "8-25" OR \
+				PRECINCTID = "8-26" OR \
+				PRECINCTID = "8-27" OR \
+				PRECINCTID = "8-28" OR \
+				PRECINCTID = "17-17" OR \
+				PRECINCTID = "17-18" OR \
+				PRECINCTID = "17-18A" OR \
+				PRECINCTID = "17-19" OR \
+				PRECINCTID = "17-20"'
+
+exports/shp/opsb/opsb-district-3-precincts.shp: shp/opsb/opsb-district-3-precincts-untrimmed.shp shp/opsb/precinct-5-8-riverside.shp shp/opsb/precinct-7-12-riverside.shp
+	@# Remove portion of precincts 5-8 and 7-12. OPSB district doesn't perfectly align with precinct.
+	@mkdir -p $(dir $@)
+	@mkdir -p tmp
+	@echo '<OGRVRTDataSource><OGRVRTLayer name="opsb-district-3-precincts-untrimmed"><SrcDataSource>$<</SrcDataSource></OGRVRTLayer><OGRVRTLayer name="precinct-5-8-riverside"><SrcDataSource>shp/opsb/precinct-5-8-riverside.shp</SrcDataSource></OGRVRTLayer></OGRVRTDataSource>' | \
+		ogr2ogr -f 'ESRI Shapefile' \
+		tmp/dist-3-minus-5-8.shp /vsistdin/ \
+		-dialect sqlite \
+		-sql "SELECT ST_Difference(district.GEOMETRY, precinct.GEOMETRY) AS geometry, district.* FROM 'opsb-district-3-precincts-untrimmed' AS district, 'precinct-5-8-riverside' AS precinct"
+	@echo '<OGRVRTDataSource><OGRVRTLayer name="dist-3-minus-5-8"><SrcDataSource>tmp/dist-3-minus-5-8.shp</SrcDataSource></OGRVRTLayer><OGRVRTLayer name="precinct-7-12-riverside"><SrcDataSource>shp/opsb/precinct-7-12-riverside.shp</SrcDataSource></OGRVRTLayer></OGRVRTDataSource>' | \
+		ogr2ogr -f 'ESRI Shapefile' \
+		$@ /vsistdin/ \
+		-dialect sqlite \
+		-sql "SELECT ST_Difference(district.GEOMETRY, precinct.GEOMETRY) AS geometry, district.* FROM 'dist-3-minus-5-8' AS district, 'precinct-7-12-riverside' AS precinct"
+	@rm -rf tmp
+
+	@ogrinfo $@ -sql "ALTER TABLE opsb-district-3-precincts ADD COLUMN DISTRICT varchar(1)"
+	@ogrinfo $@ -dialect sqlite -sql "UPDATE 'opsb-district-3-precincts' SET DISTRICT = '3'"
+exports/shp/opsb/opsb-district-3.shp: exports/shp/opsb/opsb-district-3-precincts.shp
+	@# Buffer is to remove slivers that were forming inside the district shapes.
+	@ogr2ogr $@ $< -dialect sqlite -sql "SELECT st_union(ST_Buffer(GEOMETRY, 0.0000001)) AS geometry, precincts.* FROM 'opsb-district-3-precincts' AS precincts"
+
+exports/shp/opsb/opsb-district-4-precincts.shp: exports/shp/precincts/new-orleans.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-where 'PRECINCTID = "5-1" OR \
+				PRECINCTID = "6-1" OR \
+				PRECINCTID = "8-1" OR \
+				PRECINCTID = "8-2" OR \
+				PRECINCTID = "9-9" OR \
+				PRECINCTID = "9-11" OR \
+				PRECINCTID = "9-12" OR \
+				PRECINCTID = "9-13" OR \
+				PRECINCTID = "9-14" OR \
+				PRECINCTID = "9-15" OR \
+				PRECINCTID = "9-16" OR \
+				PRECINCTID = "15-1" OR \
+				PRECINCTID = "15-2" OR \
+				PRECINCTID = "15-3" OR \
+				PRECINCTID = "15-9" OR \
+				PRECINCTID = "15-12" OR \
+				PRECINCTID = "15-13" OR \
+				PRECINCTID = "15-14" OR \
+				PRECINCTID = "15-14A" OR \
+				PRECINCTID = "15-14B" OR \
+				PRECINCTID = "15-14C" OR \
+				PRECINCTID = "15-14D" OR \
+				PRECINCTID = "15-14E" OR \
+				PRECINCTID = "15-14F" OR \
+				PRECINCTID = "15-14G" OR \
+				PRECINCTID = "15-15" OR \
+				PRECINCTID = "15-15A" OR \
+				PRECINCTID = "15-15B" OR \
+				PRECINCTID = "15-16" OR \
+				PRECINCTID = "15-17" OR \
+				PRECINCTID = "15-17A" OR \
+				PRECINCTID = "15-17B" OR \
+				PRECINCTID = "15-18" OR \
+				PRECINCTID = "15-18A" OR \
+				PRECINCTID = "15-18B" OR \
+				PRECINCTID = "15-18C" OR \
+				PRECINCTID = "15-18D" OR \
+				PRECINCTID = "15-18E" OR \
+				PRECINCTID = "15-18F" OR \
+				PRECINCTID = "15-19" OR \
+				PRECINCTID = "15-19A" OR \
+				PRECINCTID = "15-19B" OR \
+				PRECINCTID = "15-19C"'
+	@ogrinfo $@ -sql "ALTER TABLE opsb-district-4-precincts ADD COLUMN DISTRICT varchar(1)"
+	@ogrinfo $@ -dialect sqlite -sql "UPDATE 'opsb-district-4-precincts' SET DISTRICT = '4'"
+exports/shp/opsb/opsb-district-4.shp: exports/shp/opsb/opsb-district-4-precincts.shp
+	@# Buffer is to remove slivers that were forming inside the district shapes.
+	@ogr2ogr $@ $< -dialect sqlite -sql "SELECT st_union(ST_Buffer(GEOMETRY, 0.0000001)) AS geometry, precincts.* FROM 'opsb-district-4-precincts' AS precincts"
+
+exports/shp/opsb/opsb-district-5-precincts.shp: exports/shp/precincts/new-orleans.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-where 'PRECINCTID = "1-1" OR \
+				PRECINCTID = "1-2" OR \
+				PRECINCTID = "1-5" OR \
+				PRECINCTID = "1-6" OR \
+				PRECINCTID = "2-1" OR \
+				PRECINCTID = "2-2" OR \
+				PRECINCTID = "10-3" OR \
+				PRECINCTID = "10-6" OR \
+				PRECINCTID = "10-7" OR \
+				PRECINCTID = "10-8" OR \
+				PRECINCTID = "10-9" OR \
+				PRECINCTID = "10-11" OR \
+				PRECINCTID = "10-12" OR \
+				PRECINCTID = "10-13" OR \
+				PRECINCTID = "10-14" OR \
+				PRECINCTID = "11-2" OR \
+				PRECINCTID = "11-3" OR \
+				PRECINCTID = "11-4" OR \
+				PRECINCTID = "11-5" OR \
+				PRECINCTID = "11-8" OR \
+				PRECINCTID = "11-9" OR \
+				PRECINCTID = "11-10" OR \
+				PRECINCTID = "11-11" OR \
+				PRECINCTID = "11-12" OR \
+				PRECINCTID = "11-13" OR \
+				PRECINCTID = "11-14" OR \
+				PRECINCTID = "12-1" OR \
+				PRECINCTID = "12-2" OR \
+				PRECINCTID = "12-3" OR \
+				PRECINCTID = "12-4" OR \
+				PRECINCTID = "12-5" OR \
+				PRECINCTID = "12-6" OR \
+				PRECINCTID = "12-7" OR \
+				PRECINCTID = "12-8" OR \
+				PRECINCTID = "12-9" OR \
+				PRECINCTID = "12-10" OR \
+				PRECINCTID = "12-11" OR \
+				PRECINCTID = "12-12" OR \
+				PRECINCTID = "12-13" OR \
+				PRECINCTID = "12-14" OR \
+				PRECINCTID = "12-16" OR \
+				PRECINCTID = "12-17" OR \
+				PRECINCTID = "13-1" OR \
+				PRECINCTID = "13-2" OR \
+				PRECINCTID = "13-3" OR \
+				PRECINCTID = "13-4" OR \
+				PRECINCTID = "13-5" OR \
+				PRECINCTID = "13-6" OR \
+				PRECINCTID = "13-7" OR \
+				PRECINCTID = "13-9" OR \
+				PRECINCTID = "13-10" OR \
+				PRECINCTID = "13-11" OR \
+				PRECINCTID = "13-12" OR \
+				PRECINCTID = "13-13" OR \
+				PRECINCTID = "13-14" OR \
+				PRECINCTID = "13-15" OR \
+				PRECINCTID = "13-16" OR \
+				PRECINCTID = "14-15" OR \
+				PRECINCTID = "14-20" OR \
+				PRECINCTID = "14-23"'
+	@ogrinfo $@ -sql "ALTER TABLE opsb-district-5-precincts ADD COLUMN DISTRICT varchar(1)"
+	@ogrinfo $@ -dialect sqlite -sql "UPDATE 'opsb-district-5-precincts' SET DISTRICT = '5'"
+exports/shp/opsb/opsb-district-5.shp: exports/shp/opsb/opsb-district-5-precincts.shp
+	@# Buffer is to remove slivers that were forming inside the district shapes.
+	@ogr2ogr $@ $< -dialect sqlite -sql "SELECT st_union(ST_Buffer(GEOMETRY, 0.0000001)) AS geometry, precincts.* FROM 'opsb-district-5-precincts' AS precincts"
+
+exports/shp/opsb/opsb-district-6-precincts.shp: exports/shp/precincts/new-orleans.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-where 'PRECINCTID = "2-4" OR \
+				PRECINCTID = "2-6" OR \
+				PRECINCTID = "2-6A" OR \
+				PRECINCTID = "2-7" OR \
+				PRECINCTID = "11-17" OR \
+				PRECINCTID = "12-19" OR \
+				PRECINCTID = "13-8" OR \
+				PRECINCTID = "14-1" OR \
+				PRECINCTID = "14-2" OR \
+				PRECINCTID = "14-3" OR \
+				PRECINCTID = "14-4" OR \
+				PRECINCTID = "14-5" OR \
+				PRECINCTID = "14-6" OR \
+				PRECINCTID = "14-7" OR \
+				PRECINCTID = "14-8" OR \
+				PRECINCTID = "14-9" OR \
+				PRECINCTID = "14-10" OR \
+				PRECINCTID = "14-11" OR \
+				PRECINCTID = "14-12" OR \
+				PRECINCTID = "14-13A" OR \
+				PRECINCTID = "14-14" OR \
+				PRECINCTID = "14-16" OR \
+				PRECINCTID = "14-17" OR \
+				PRECINCTID = "14-18A" OR \
+				PRECINCTID = "14-19" OR \
+				PRECINCTID = "14-21" OR \
+				PRECINCTID = "14-24A" OR \
+				PRECINCTID = "14-25" OR \
+				PRECINCTID = "14-26" OR \
+				PRECINCTID = "16-1" OR \
+				PRECINCTID = "16-1A" OR \
+				PRECINCTID = "16-2" OR \
+				PRECINCTID = "16-3" OR \
+				PRECINCTID = "16-4" OR \
+				PRECINCTID = "16-5" OR \
+				PRECINCTID = "16-6" OR \
+				PRECINCTID = "16-7" OR \
+				PRECINCTID = "16-8" OR \
+				PRECINCTID = "16-9" OR \
+				PRECINCTID = "17-1" OR \
+				PRECINCTID = "17-2" OR \
+				PRECINCTID = "17-3" OR \
+				PRECINCTID = "17-4" OR \
+				PRECINCTID = "17-5" OR \
+				PRECINCTID = "17-6" OR \
+				PRECINCTID = "17-7" OR \
+				PRECINCTID = "17-8" OR \
+				PRECINCTID = "17-9" OR \
+				PRECINCTID = "17-10" OR \
+				PRECINCTID = "17-11" OR \
+				PRECINCTID = "17-12" OR \
+				PRECINCTID = "17-13" OR \
+				PRECINCTID = "17-13A" OR \
+				PRECINCTID = "17-14" OR \
+				PRECINCTID = "17-15" OR \
+				PRECINCTID = "17-16"'
+	@ogrinfo $@ -sql "ALTER TABLE opsb-district-6-precincts ADD COLUMN DISTRICT varchar(1)"
+	@ogrinfo $@ -dialect sqlite -sql "UPDATE 'opsb-district-6-precincts' SET DISTRICT = '6'"
+exports/shp/opsb/opsb-district-6.shp: exports/shp/opsb/opsb-district-6-precincts.shp
+	@# Buffer is to remove slivers that were forming inside the district shapes.
+	@ogr2ogr $@ $< -dialect sqlite -sql "SELECT st_union(ST_Buffer(GEOMETRY, 0.0000001)) AS geometry, precincts.* FROM 'opsb-district-6-precincts' AS precincts"
+
+shp/opsb/opsb-district-7-precincts-untrimmed.shp: exports/shp/precincts/new-orleans.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-where 'PRECINCTID = "3-1" OR \
+				PRECINCTID = "3-3" OR \
+				PRECINCTID = "3-5" OR \
+				PRECINCTID = "3-8" OR \
+				PRECINCTID = "3-9" OR \
+				PRECINCTID = "4-2" OR \
+				PRECINCTID = "4-3" OR \
+				PRECINCTID = "4-4" OR \
+				PRECINCTID = "5-2" OR \
+				PRECINCTID = "5-3" OR \
+				PRECINCTID = "5-4" OR \
+				PRECINCTID = "5-5" OR \
+				PRECINCTID = "5-7" OR \
+				PRECINCTID = "5-8" OR \
+				PRECINCTID = "6-2" OR \
+				PRECINCTID = "6-4" OR \
+				PRECINCTID = "6-6" OR \
+				PRECINCTID = "6-7" OR \
+				PRECINCTID = "6-8" OR \
+				PRECINCTID = "7-1" OR \
+				PRECINCTID = "7-2" OR \
+				PRECINCTID = "7-4" OR \
+				PRECINCTID = "7-5" OR \
+				PRECINCTID = "7-6" OR \
+				PRECINCTID = "7-7" OR \
+				PRECINCTID = "7-8" OR \
+				PRECINCTID = "7-9A" OR \
+				PRECINCTID = "7-10" OR \
+				PRECINCTID = "7-11" OR \
+				PRECINCTID = "7-12" OR \
+				PRECINCTID = "7-13" OR \
+				PRECINCTID = "7-14" OR \
+				PRECINCTID = "7-15" OR \
+				PRECINCTID = "7-16" OR \
+				PRECINCTID = "7-20" OR \
+				PRECINCTID = "7-21" OR \
+				PRECINCTID = "7-23" OR \
+				PRECINCTID = "7-24" OR \
+				PRECINCTID = "7-25" OR \
+				PRECINCTID = "7-25A" OR \
+				PRECINCTID = "7-26" OR \
+				PRECINCTID = "7-27" OR \
+				PRECINCTID = "7-27B" OR \
+				PRECINCTID = "7-28" OR \
+				PRECINCTID = "7-28A" OR \
+				PRECINCTID = "7-29" OR \
+				PRECINCTID = "15-5" OR \
+				PRECINCTID = "15-6" OR \
+				PRECINCTID = "15-8" OR \
+				PRECINCTID = "15-10" OR \
+				PRECINCTID = "15-11" OR \
+				PRECINCTID = "15-12A" OR \
+				PRECINCTID = "15-13A" OR \
+				PRECINCTID = "15-13B"'
+exports/shp/opsb/opsb-district-7-precincts.shp: shp/opsb/opsb-district-7-precincts-untrimmed.shp shp/opsb/precinct-5-8-lakeside.shp shp/opsb/precinct-7-12-lakeside.shp
+	@# Remove portion of precincts 5-8 and 7-12. OPSB district doesn't perfectly align with precinct.
+	@mkdir -p $(dir $@)
+	@mkdir -p tmp
+	@echo '<OGRVRTDataSource><OGRVRTLayer name="opsb-district-7-precincts-untrimmed"><SrcDataSource>$<</SrcDataSource></OGRVRTLayer><OGRVRTLayer name="precinct-5-8-lakeside"><SrcDataSource>shp/opsb/precinct-5-8-lakeside.shp</SrcDataSource></OGRVRTLayer></OGRVRTDataSource>' | \
+		ogr2ogr tmp/opsb-district-7-precinct-5-8.shp /vsistdin/ \
+		-overwrite \
+		-dialect sqlite \
+		-sql "SELECT ST_Difference(district.GEOMETRY, precinct.GEOMETRY) AS geometry, district.* FROM 'opsb-district-7-precincts-untrimmed' AS district, 'precinct-5-8-lakeside' AS precinct"
+	@echo '<OGRVRTDataSource><OGRVRTLayer name="opsb-district-7-precinct-5-8"><SrcDataSource>tmp/opsb-district-7-precinct-5-8.shp</SrcDataSource></OGRVRTLayer><OGRVRTLayer name="precinct-7-12-lakeside"><SrcDataSource>shp/opsb/precinct-7-12-lakeside.shp</SrcDataSource></OGRVRTLayer></OGRVRTDataSource>' | \
+		ogr2ogr $@ /vsistdin/ \
+		-overwrite \
+		-dialect sqlite \
+		-sql "SELECT ST_Difference(district.GEOMETRY, precinct.GEOMETRY) AS geometry, district.* FROM 'opsb-district-7-precinct-5-8' AS district, 'precinct-7-12-lakeside' AS precinct"
+	@rm -rf tmp
+
+	@ogrinfo $@ -sql "ALTER TABLE opsb-district-7-precincts ADD COLUMN DISTRICT varchar(1)"
+	@ogrinfo $@ -dialect sqlite -sql "UPDATE 'opsb-district-7-precincts' SET DISTRICT = '7'"
+exports/shp/opsb/opsb-district-7.shp: exports/shp/opsb/opsb-district-7-precincts.shp
+	@# Buffer is to remove slivers that were forming inside the district shapes.
+	@ogr2ogr $@ $< -dialect sqlite -sql "SELECT st_union(ST_Buffer(GEOMETRY, 0.0000001)) AS geometry, precincts.* FROM 'opsb-district-7-precincts' AS precincts"
+
+exports/shp/opsb/opsb.shp: exports/shp/opsb/opsb-district-1.shp \
+	exports/shp/opsb/opsb-district-2.shp \
+	exports/shp/opsb/opsb-district-3.shp \
+	exports/shp/opsb/opsb-district-4.shp \
+	exports/shp/opsb/opsb-district-5.shp \
+	exports/shp/opsb/opsb-district-6.shp \
+	exports/shp/opsb/opsb-district-7.shp
+
+	@mkdir -p $(dir $@)
+	@for file in $^; do ogr2ogr -update -append -nln opsb $@ $$file; done
+exports/shp/opsb/opsb-precincts.shp: exports/shp/opsb/opsb-district-1-precincts.shp \
+	exports/shp/opsb/opsb-district-2-precincts.shp \
+	exports/shp/opsb/opsb-district-3-precincts.shp \
+	exports/shp/opsb/opsb-district-4-precincts.shp \
+	exports/shp/opsb/opsb-district-5-precincts.shp \
+	exports/shp/opsb/opsb-district-6-precincts.shp \
+	exports/shp/opsb/opsb-district-7-precincts.shp
+
+	@mkdir -p $(dir $@)
+	@for file in $^; do ogr2ogr -update -append -nln 'opsb-precincts' $@ $$file; done
+
+exports/shp/opsb/opsb-simplified.shp: exports/shp/opsb/opsb.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-simplify 0.0003 \
+		-sql "SELECT PRECINCTID AS precinctid, COUNTY AS parishname, DISTRICT AS district FROM opsb"
+exports/shp/opsb/opsb-precincts-simplified.shp: exports/shp/opsb/opsb-precincts.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-simplify 0.0003 \
+		-dialect sqlite \
+		-sql "SELECT Geometry, PRECINCTID AS precinctid, DISTRICT AS district, COUNTY AS parishname FROM 'opsb-precincts'"
+
+exports/shp/opsb/opsb-district-1-simplified.shp: exports/shp/opsb/opsb-district-1.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-simplify 0.0003 \
+		-dialect sqlite \
+		-sql "SELECT Geometry, PRECINCTID AS precinctid, COUNTY AS parishname, DISTRICT AS district FROM 'opsb-district-1'"
+exports/shp/opsb/opsb-district-1-precincts-simplified.shp: exports/shp/opsb/opsb-district-1-precincts.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-simplify 0.0003 \
+		-sql "SELECT PRECINCTID AS precinctid, COUNTY AS parishname, DISTRICT AS district FROM 'opsb-district-1-precincts'"
+
+exports/shp/opsb/opsb-district-2-simplified.shp: exports/shp/opsb/opsb-district-2.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-simplify 0.0003 \
+		-dialect sqlite \
+		-sql "SELECT Geometry, PRECINCTID AS precinctid, COUNTY AS parishname, DISTRICT AS district FROM 'opsb-district-2'"
+exports/shp/opsb/opsb-district-2-precincts-simplified.shp: exports/shp/opsb/opsb-district-2-precincts.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-simplify 0.0003 \
+		-sql "SELECT PRECINCTID AS precinctid, COUNTY AS parishname, DISTRICT AS district FROM 'opsb-district-2-precincts'"
+
+exports/shp/opsb/opsb-district-3-simplified.shp: exports/shp/opsb/opsb-district-3.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-simplify 0.0003 \
+		-dialect sqlite \
+		-sql "SELECT Geometry, PRECINCTID AS precinctid, COUNTY AS parishname, DISTRICT AS district FROM 'opsb-district-3'"
+exports/shp/opsb/opsb-district-3-precincts-simplified.shp: exports/shp/opsb/opsb-district-3-precincts.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-simplify 0.0003 \
+		-sql "SELECT PRECINCTID AS precinctid, COUNTY AS parishname, DISTRICT AS district FROM 'opsb-district-3-precincts'"
+
+exports/shp/opsb/opsb-district-4-simplified.shp: exports/shp/opsb/opsb-district-4.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-simplify 0.0003 \
+		-dialect sqlite \
+		-sql "SELECT Geometry, PRECINCTID AS precinctid, COUNTY AS parishname, DISTRICT AS district FROM 'opsb-district-4'"
+exports/shp/opsb/opsb-district-4-precincts-simplified.shp: exports/shp/opsb/opsb-district-4-precincts.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-simplify 0.0003 \
+		-sql "SELECT PRECINCTID AS precinctid, COUNTY AS parishname, DISTRICT AS district FROM 'opsb-district-4-precincts'"
+
+exports/shp/opsb/opsb-district-5-simplified.shp: exports/shp/opsb/opsb-district-5.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-simplify 0.0003 \
+		-dialect sqlite \
+		-sql "SELECT Geometry, PRECINCTID AS precinctid, COUNTY AS parishname, DISTRICT AS district FROM 'opsb-district-5'"
+exports/shp/opsb/opsb-district-5-precincts-simplified.shp: exports/shp/opsb/opsb-district-5-precincts.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-simplify 0.0003 \
+		-sql "SELECT PRECINCTID AS precinctid, COUNTY AS parishname, DISTRICT AS district FROM 'opsb-district-5-precincts'"
+
+exports/shp/opsb/opsb-district-6-simplified.shp: exports/shp/opsb/opsb-district-6.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-simplify 0.0003 \
+		-dialect sqlite \
+		-sql "SELECT Geometry, PRECINCTID AS precinctid, COUNTY AS parishname, DISTRICT AS district FROM 'opsb-district-6'"
+exports/shp/opsb/opsb-district-6-precincts-simplified.shp: exports/shp/opsb/opsb-district-6-precincts.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-simplify 0.0003 \
+		-sql "SELECT PRECINCTID AS precinctid, COUNTY AS parishname, DISTRICT AS district FROM 'opsb-district-6-precincts'"
+
+exports/shp/opsb/opsb-district-7-simplified.shp: exports/shp/opsb/opsb-district-7.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-simplify 0.0003 \
+		-dialect sqlite \
+		-sql "SELECT Geometry, PRECINCTID AS precinctid, COUNTY AS parishname, DISTRICT AS district FROM 'opsb-district-7'"
+exports/shp/opsb/opsb-district-7-precincts-simplified.shp: exports/shp/opsb/opsb-district-7-precincts.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-simplify 0.0003 \
+		-sql "SELECT PRECINCTID AS precinctid, COUNTY AS parishname, DISTRICT AS district FROM 'opsb-district-7-precincts'"
+
+# Export to other file formats
+exports/geojson/opsb/%.json: exports/shp/opsb/%.shp
+	@mkdir -p $(dir $@)
+	@rm -f $@
+	@ogr2ogr -f 'GeoJSON' $@ $<
+exports/topojson/opsb/%.json: exports/shp/opsb/%.shp
+	@mkdir -p $(dir $@)
+	@topojson -o $@ $< -p
+
+opsb: exports/shp/opsb/opsb.shp \
+	exports/shp/opsb/opsb-district-1.shp \
+	exports/shp/opsb/opsb-district-2.shp \
+	exports/shp/opsb/opsb-district-3.shp \
+	exports/shp/opsb/opsb-district-4.shp \
+	exports/shp/opsb/opsb-district-5.shp \
+	exports/shp/opsb/opsb-district-6.shp \
+	exports/shp/opsb/opsb-district-7.shp \
+	exports/shp/opsb/opsb-precincts.shp \
+	exports/shp/opsb/opsb-district-1-precincts.shp \
+	exports/shp/opsb/opsb-district-2-precincts.shp \
+	exports/shp/opsb/opsb-district-3-precincts.shp \
+	exports/shp/opsb/opsb-district-4-precincts.shp \
+	exports/shp/opsb/opsb-district-5-precincts.shp \
+	exports/shp/opsb/opsb-district-6-precincts.shp \
+	exports/shp/opsb/opsb-district-7-precincts.shp \
+	exports/shp/opsb/opsb-simplified.shp \
+	exports/shp/opsb/opsb-district-1-simplified.shp \
+	exports/shp/opsb/opsb-district-2-simplified.shp \
+	exports/shp/opsb/opsb-district-3-simplified.shp \
+	exports/shp/opsb/opsb-district-4-simplified.shp \
+	exports/shp/opsb/opsb-district-5-simplified.shp \
+	exports/shp/opsb/opsb-district-6-simplified.shp \
+	exports/shp/opsb/opsb-district-7-simplified.shp \
+	exports/shp/opsb/opsb-precincts-simplified.shp \
+	exports/shp/opsb/opsb-district-1-precincts-simplified.shp \
+	exports/shp/opsb/opsb-district-2-precincts-simplified.shp \
+	exports/shp/opsb/opsb-district-3-precincts-simplified.shp \
+	exports/shp/opsb/opsb-district-4-precincts-simplified.shp \
+	exports/shp/opsb/opsb-district-5-precincts-simplified.shp \
+	exports/shp/opsb/opsb-district-6-precincts-simplified.shp \
+	exports/shp/opsb/opsb-district-7-precincts-simplified.shp \
+	exports/geojson/opsb/opsb.json \
+	exports/geojson/opsb/opsb-district-1.json \
+	exports/geojson/opsb/opsb-district-2.json \
+	exports/geojson/opsb/opsb-district-3.json \
+	exports/geojson/opsb/opsb-district-4.json \
+	exports/geojson/opsb/opsb-district-5.json \
+	exports/geojson/opsb/opsb-district-6.json \
+	exports/geojson/opsb/opsb-district-7.json \
+	exports/geojson/opsb/opsb-precincts.json \
+	exports/geojson/opsb/opsb-district-1-precincts.json \
+	exports/geojson/opsb/opsb-district-2-precincts.json \
+	exports/geojson/opsb/opsb-district-3-precincts.json \
+	exports/geojson/opsb/opsb-district-4-precincts.json \
+	exports/geojson/opsb/opsb-district-5-precincts.json \
+	exports/geojson/opsb/opsb-district-6-precincts.json \
+	exports/geojson/opsb/opsb-district-7-precincts.json \
+	exports/geojson/opsb/opsb-simplified.json \
+	exports/geojson/opsb/opsb-district-1-simplified.json \
+	exports/geojson/opsb/opsb-district-2-simplified.json \
+	exports/geojson/opsb/opsb-district-3-simplified.json \
+	exports/geojson/opsb/opsb-district-4-simplified.json \
+	exports/geojson/opsb/opsb-district-5-simplified.json \
+	exports/geojson/opsb/opsb-district-6-simplified.json \
+	exports/geojson/opsb/opsb-district-7-simplified.json \
+	exports/geojson/opsb/opsb-precincts-simplified.json \
+	exports/geojson/opsb/opsb-district-1-precincts-simplified.json \
+	exports/geojson/opsb/opsb-district-2-precincts-simplified.json \
+	exports/geojson/opsb/opsb-district-3-precincts-simplified.json \
+	exports/geojson/opsb/opsb-district-4-precincts-simplified.json \
+	exports/geojson/opsb/opsb-district-5-precincts-simplified.json \
+	exports/geojson/opsb/opsb-district-6-precincts-simplified.json \
+	exports/geojson/opsb/opsb-district-7-precincts-simplified.json \
+	exports/topojson/opsb/opsb.json \
+	exports/topojson/opsb/opsb-district-1.json \
+	exports/topojson/opsb/opsb-district-2.json \
+	exports/topojson/opsb/opsb-district-3.json \
+	exports/topojson/opsb/opsb-district-4.json \
+	exports/topojson/opsb/opsb-district-5.json \
+	exports/topojson/opsb/opsb-district-6.json \
+	exports/topojson/opsb/opsb-district-7.json \
+	exports/topojson/opsb/opsb-precincts.json \
+	exports/topojson/opsb/opsb-district-1-precincts.json \
+	exports/topojson/opsb/opsb-district-2-precincts.json \
+	exports/topojson/opsb/opsb-district-3-precincts.json \
+	exports/topojson/opsb/opsb-district-4-precincts.json \
+	exports/topojson/opsb/opsb-district-5-precincts.json \
+	exports/topojson/opsb/opsb-district-6-precincts.json \
+	exports/topojson/opsb/opsb-district-7-precincts.json \
+	exports/topojson/opsb/opsb-simplified.json \
+	exports/topojson/opsb/opsb-district-1-simplified.json \
+	exports/topojson/opsb/opsb-district-2-simplified.json \
+	exports/topojson/opsb/opsb-district-3-simplified.json \
+	exports/topojson/opsb/opsb-district-4-simplified.json \
+	exports/topojson/opsb/opsb-district-5-simplified.json \
+	exports/topojson/opsb/opsb-district-6-simplified.json \
+	exports/topojson/opsb/opsb-district-7-simplified.json \
+	exports/topojson/opsb/opsb-precincts-simplified.json \
+	exports/topojson/opsb/opsb-district-1-precincts-simplified.json \
+	exports/topojson/opsb/opsb-district-2-precincts-simplified.json \
+	exports/topojson/opsb/opsb-district-3-precincts-simplified.json \
+	exports/topojson/opsb/opsb-district-4-precincts-simplified.json \
+	exports/topojson/opsb/opsb-district-5-precincts-simplified.json \
+	exports/topojson/opsb/opsb-district-6-precincts-simplified.json \
+	exports/topojson/opsb/opsb-district-7-precincts-simplified.json
+
+##################################################
+#                                                #
+#  French Quarter Economic Development District  #
+#                                                #
+##################################################
+
+# Learn more: http://nola.gov/fqedd/
+# Boundaries are center line of Canal Street, Mississippi River, back property line
+# of properties along Rampart Street facing river, and back property line of
+# properties along Esplanade Avenue facing Uptown.
+
+# Download New Orleans neighborhoods .zip file
+zip/misc-new-orleans/fq-econ-dev-dist.zip:
+	@mkdir -p $(dir $@)
+	@# Hand-made file
+	@curl -sS -o $@.download 'https://s3-us-west-2.amazonaws.com/projects.thelensnola.org/geographic-data/hand-made/french-quarter-economic-development-district/fq-econ-dev-dist.zip'
+	@mv $@.download $@
+
+# Unzip
+exports/shp/misc-new-orleans/%.shp: zip/misc-new-orleans/%.zip
+	@mkdir -p $(dir $@)
+
+	@# Extract .zip contents to temporary folder
+	@mkdir -p tmp
+	@unzip -q -o -d tmp $<
+
+	@# Renaming .zip contents in case they have a space in their names.
+	@# Note that this is problematic if there are multiple files with the same file extension.
+	@for file in tmp/*.*; do \
+		fullfile=$$(basename "$$file") && \
+		filename=$${fullfile%.*} && \
+		fileextension="$${file##*.}" && \
+		cp "$$file" "$(dir $@)$*.$$fileextension" ; \
+	done
+
+	@rm -rf tmp
+
+# Simplify geometries
+exports/shp/misc-new-orleans/fq-econ-dev-dist-simplified.shp: exports/shp/misc-new-orleans/fq-econ-dev-dist.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-simplify 0.0001 \
+		-dialect sqlite \
+		-sql "SELECT district.GEOMETRY AS geometry, district.* FROM 'fq-econ-dev-dist' AS district"
+
+# Export to other file formats
+exports/geojson/misc-new-orleans/%.json: exports/shp/misc-new-orleans/%.shp
+	@mkdir -p $(dir $@)
+	@rm -f $@
+	@ogr2ogr -f 'GeoJSON' $@ $<
+exports/topojson/misc-new-orleans/%.json: exports/shp/misc-new-orleans/%.shp
+	@mkdir -p $(dir $@)
+	@topojson -o $@ $< -p
+
+fq_economic_development_district: exports/shp/misc-new-orleans/fq-econ-dev-dist.shp \
+	exports/shp/misc-new-orleans/fq-econ-dev-dist-simplified.shp \
+	exports/geojson/misc-new-orleans/fq-econ-dev-dist.json \
+	exports/geojson/misc-new-orleans/fq-econ-dev-dist-simplified.json \
+	exports/topojson/misc-new-orleans/fq-econ-dev-dist.json \
+	exports/topojson/misc-new-orleans/fq-econ-dev-dist-simplified.json
 
 ###################
 #                 #
@@ -42,7 +857,6 @@ shp/neighborhoods/%-extracted.shp: zip/neighborhoods/%.zip
 		cp "$$file" "$(dir $@)$*-extracted.$$fileextension" ; \
 	done
 
-	@# Delete temporary folder
 	@rm -rf tmp
 
 # Change coordinate system to WGS 84 (EPSG:4326)
@@ -178,6 +992,17 @@ exports/shp/parishes/louisiana-simplified.shp: exports/shp/parishes/louisiana.sh
 				louisiana.NAME10 AS parishname \
 			FROM louisiana"
 
+exports/shp/parishes/parishes.shp: exports/shp/parishes/louisiana.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-simplify 0.0020 \
+		-dialect sqlite \
+		-sql "SELECT louisiana.GEOMETRY AS geometry, \
+				louisiana.COUNTYFP10 AS parishcode, \
+				louisiana.NAME10 AS parishname \
+			FROM louisiana"
+
 # Export to other file formats
 exports/geojson/parishes/%.json: exports/shp/parishes/%.shp
 	@mkdir -p $(dir $@)
@@ -189,6 +1014,7 @@ exports/topojson/parishes/%.json: exports/shp/parishes/%.shp
 
 parishes: exports/shp/parishes/louisiana.shp \
 	exports/shp/parishes/louisiana-simplified.shp \
+	exports/shp/parishes/parishes.shp \
 	exports/shp/parishes/orleans.shp \
 	exports/shp/parishes/orleans-simplified.shp \
 	exports/shp/parishes/orleans-no-lake.shp \
@@ -196,6 +1022,7 @@ parishes: exports/shp/parishes/louisiana.shp \
 	exports/shp/parishes/orleans-no-lake-no-river.shp \
 	exports/shp/parishes/orleans-no-lake-no-river-simplified.shp \
 	exports/geojson/parishes/louisiana.json \
+	exports/geojson/parishes/parishes.json \
 	exports/geojson/parishes/louisiana-simplified.json \
 	exports/geojson/parishes/orleans.json \
 	exports/geojson/parishes/orleans-simplified.json \
@@ -204,6 +1031,7 @@ parishes: exports/shp/parishes/louisiana.shp \
 	exports/geojson/parishes/orleans-no-lake-no-river.json \
 	exports/geojson/parishes/orleans-no-lake-no-river-simplified.json \
 	exports/topojson/parishes/louisiana.json \
+	exports/topojson/parishes/parishes.json \
 	exports/topojson/parishes/louisiana-simplified.json \
 	exports/topojson/parishes/orleans.json \
 	exports/topojson/parishes/orleans-simplified.json \
@@ -237,14 +1065,13 @@ shp/bese/%-extracted.shp: zip/bese/%.zip
 		cp "$$file" "$(dir $@)$*-extracted.$$fileextension" ; \
 	done
 
-	@# Delete temporary folder
 	@rm -rf tmp
 
-# Convert CRS to WGS 84 (EPSG:4326).
+# Convert CRS to WGS 84 (EPSG:4326)
 shp/bese/%-crs.shp: shp/bese/%-extracted.shp
 	@ogr2ogr -f 'ESRI Shapefile' -t_srs "EPSG:4326" $@ $<
 
-# Remove water geometry.
+# Remove water geometry
 exports/shp/bese/bese.shp: shp/bese/bese-crs.shp \
 	exports/shp/water/gulf-of-mexico.shp
 
@@ -254,14 +1081,122 @@ exports/shp/bese/bese.shp: shp/bese/bese-crs.shp \
 		-dialect sqlite \
 		-sql "SELECT ST_Difference(bese.GEOMETRY, ST_Buffer(gulf.GEOMETRY, 0.0075)) AS geometry, bese.* FROM 'bese-crs' AS bese, 'gulf-of-mexico' AS gulf"
 
-# Simplify geometry
+# Overall simplified file
 exports/shp/bese/bese-simplified.shp: exports/shp/bese/bese.shp
 	@mkdir -p $(dir $@)
 	@ogr2ogr -f 'ESRI Shapefile' \
 		$@ $< \
 		-simplify 0.0003 \
 		-dialect sqlite \
-		-sql "SELECT bese.GEOMETRY AS geometry, bese.DISTRICT_I AS dist_name FROM 'bese'"
+		-sql "SELECT bese.GEOMETRY AS geometry, bese.DISTRICT_I AS district FROM bese"
+
+# Split each district into its own file
+exports/shp/bese/bese-district-1.shp: exports/shp/bese/bese.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-dialect sqlite \
+		-sql "SELECT bese.* FROM bese WHERE DISTRICT_I = '1'"
+exports/shp/bese/bese-district-2.shp: exports/shp/bese/bese.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-dialect sqlite \
+		-sql "SELECT bese.* FROM bese WHERE DISTRICT_I = '2'"
+exports/shp/bese/bese-district-3.shp: exports/shp/bese/bese.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-dialect sqlite \
+		-sql "SELECT bese.* FROM bese WHERE DISTRICT_I = '3'"
+exports/shp/bese/bese-district-4.shp: exports/shp/bese/bese.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-dialect sqlite \
+		-sql "SELECT bese.* FROM bese WHERE DISTRICT_I = '4'"
+exports/shp/bese/bese-district-5.shp: exports/shp/bese/bese.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-dialect sqlite \
+		-sql "SELECT bese.* FROM bese WHERE DISTRICT_I = '5'"
+exports/shp/bese/bese-district-6.shp: exports/shp/bese/bese.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-dialect sqlite \
+		-sql "SELECT bese.* FROM bese WHERE DISTRICT_I = '6'"
+exports/shp/bese/bese-district-7.shp: exports/shp/bese/bese.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-dialect sqlite \
+		-sql "SELECT bese.* FROM bese WHERE DISTRICT_I = '7'"
+exports/shp/bese/bese-district-8.shp: exports/shp/bese/bese.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-dialect sqlite \
+		-sql "SELECT bese.* FROM bese WHERE DISTRICT_I = '8'"
+
+# Simplify geometry
+exports/shp/bese/bese-district-1-simplified.shp: exports/shp/bese/bese-district-1.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-simplify 0.0003 \
+		-dialect sqlite \
+		-sql "SELECT bese.GEOMETRY AS geometry, bese.DISTRICT_I AS district FROM 'bese-district-1' AS bese"
+exports/shp/bese/bese-district-2-simplified.shp: exports/shp/bese/bese-district-2.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-simplify 0.0003 \
+		-dialect sqlite \
+		-sql "SELECT bese.GEOMETRY AS geometry, bese.DISTRICT_I AS district FROM 'bese-district-2' AS bese"
+exports/shp/bese/bese-district-3-simplified.shp: exports/shp/bese/bese-district-3.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-simplify 0.0003 \
+		-dialect sqlite \
+		-sql "SELECT bese.GEOMETRY AS geometry, bese.DISTRICT_I AS district FROM 'bese-district-3' AS bese"
+exports/shp/bese/bese-district-4-simplified.shp: exports/shp/bese/bese-district-4.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-simplify 0.0003 \
+		-dialect sqlite \
+		-sql "SELECT bese.GEOMETRY AS geometry, bese.DISTRICT_I AS district FROM 'bese-district-4' AS bese"
+exports/shp/bese/bese-district-5-simplified.shp: exports/shp/bese/bese-district-5.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-simplify 0.0003 \
+		-dialect sqlite \
+		-sql "SELECT bese.GEOMETRY AS geometry, bese.DISTRICT_I AS district FROM 'bese-district-5' AS bese"
+exports/shp/bese/bese-district-6-simplified.shp: exports/shp/bese/bese-district-6.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-simplify 0.0003 \
+		-dialect sqlite \
+		-sql "SELECT bese.GEOMETRY AS geometry, bese.DISTRICT_I AS district FROM 'bese-district-6' AS bese"
+exports/shp/bese/bese-district-7-simplified.shp: exports/shp/bese/bese-district-7.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-simplify 0.0003 \
+		-dialect sqlite \
+		-sql "SELECT bese.GEOMETRY AS geometry, bese.DISTRICT_I AS district FROM 'bese-district-7' AS bese"
+exports/shp/bese/bese-district-8-simplified.shp: exports/shp/bese/bese-district-8.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-simplify 0.0003 \
+		-dialect sqlite \
+		-sql "SELECT bese.GEOMETRY AS geometry, bese.DISTRICT_I AS district FROM 'bese-district-8' AS bese"
 
 # Export to other file formats
 exports/geojson/bese/%.json: exports/shp/bese/%.shp
@@ -273,11 +1208,59 @@ exports/topojson/bese/%.json: exports/shp/bese/%.shp
 	@topojson -o $@ $< -p
 
 bese: exports/shp/bese/bese.shp \
+	exports/shp/bese/bese-district-1.shp \
+	exports/shp/bese/bese-district-2.shp \
+	exports/shp/bese/bese-district-3.shp \
+	exports/shp/bese/bese-district-4.shp \
+	exports/shp/bese/bese-district-5.shp \
+	exports/shp/bese/bese-district-6.shp \
+	exports/shp/bese/bese-district-7.shp \
+	exports/shp/bese/bese-district-8.shp \
 	exports/shp/bese/bese-simplified.shp \
+	exports/shp/bese/bese-district-1-simplified.shp \
+	exports/shp/bese/bese-district-2-simplified.shp \
+	exports/shp/bese/bese-district-3-simplified.shp \
+	exports/shp/bese/bese-district-4-simplified.shp \
+	exports/shp/bese/bese-district-5-simplified.shp \
+	exports/shp/bese/bese-district-6-simplified.shp \
+	exports/shp/bese/bese-district-7-simplified.shp \
+	exports/shp/bese/bese-district-8-simplified.shp \
 	exports/geojson/bese/bese.json \
+	exports/geojson/bese/bese-district-1.json \
+	exports/geojson/bese/bese-district-2.json \
+	exports/geojson/bese/bese-district-3.json \
+	exports/geojson/bese/bese-district-4.json \
+	exports/geojson/bese/bese-district-5.json \
+	exports/geojson/bese/bese-district-6.json \
+	exports/geojson/bese/bese-district-7.json \
+	exports/geojson/bese/bese-district-8.json \
 	exports/geojson/bese/bese-simplified.json \
+	exports/geojson/bese/bese-district-1-simplified.json \
+	exports/geojson/bese/bese-district-2-simplified.json \
+	exports/geojson/bese/bese-district-3-simplified.json \
+	exports/geojson/bese/bese-district-4-simplified.json \
+	exports/geojson/bese/bese-district-5-simplified.json \
+	exports/geojson/bese/bese-district-6-simplified.json \
+	exports/geojson/bese/bese-district-7-simplified.json \
+	exports/geojson/bese/bese-district-8-simplified.json \
 	exports/topojson/bese/bese.json \
-	exports/topojson/bese/bese-simplified.json
+	exports/topojson/bese/bese-district-1.json \
+	exports/topojson/bese/bese-district-2.json \
+	exports/topojson/bese/bese-district-3.json \
+	exports/topojson/bese/bese-district-4.json \
+	exports/topojson/bese/bese-district-5.json \
+	exports/topojson/bese/bese-district-6.json \
+	exports/topojson/bese/bese-district-7.json \
+	exports/topojson/bese/bese-district-8.json \
+	exports/topojson/bese/bese-simplified.json \
+	exports/topojson/bese/bese-district-1-simplified.json \
+	exports/topojson/bese/bese-district-2-simplified.json \
+	exports/topojson/bese/bese-district-3-simplified.json \
+	exports/topojson/bese/bese-district-4-simplified.json \
+	exports/topojson/bese/bese-district-5-simplified.json \
+	exports/topojson/bese/bese-district-6-simplified.json \
+	exports/topojson/bese/bese-district-7-simplified.json \
+	exports/topojson/bese/bese-district-8-simplified.json
 
 ###############
 #             #
@@ -311,7 +1294,6 @@ shp/precincts/%-extracted.shp: zip/precincts/%.zip
 		cp "$$file" "$(dir $@)$*-extracted.$$fileextension" ; \
 	done
 
-	@# Delete temporary folder
 	@rm -rf tmp
 
 # Converting coordinate reference systems to WGS 84 (EPSG:4326).
@@ -386,6 +1368,16 @@ exports/shp/precincts/new-orleans-simplified.shp: exports/shp/precincts/new-orle
 				precincts.COUNTY AS parishname \
 			FROM 'new-orleans' AS precincts"
 
+exports/shp/precincts/precincts.shp: exports/shp/precincts/new-orleans.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-dialect sqlite \
+		-sql "SELECT precincts.GEOMETRY, \
+				precincts.PRECINCTID AS precinctid, \
+				precincts.COUNTY AS parishname \
+			FROM 'new-orleans' AS precincts"
+
 # Export to other file formats
 exports/geojson/precincts/%.json: exports/shp/precincts/%.shp
 	@mkdir -p $(dir $@)
@@ -397,13 +1389,16 @@ exports/topojson/precincts/%.json: exports/shp/precincts/%.shp
 
 precincts: exports/shp/precincts/new-orleans.shp \
 	exports/shp/precincts/new-orleans-simplified.shp \
+	exports/shp/precincts/precincts.shp \
 	exports/shp/precincts/louisiana.shp \
 	exports/shp/precincts/louisiana-simplified.shp \
 	exports/geojson/precincts/new-orleans.json \
+	exports/geojson/precincts/precincts.json \
 	exports/geojson/precincts/new-orleans-simplified.json \
 	exports/geojson/precincts/louisiana.json \
 	exports/geojson/precincts/louisiana-simplified.json \
 	exports/topojson/precincts/new-orleans.json \
+	exports/topojson/precincts/precincts.json \
 	exports/topojson/precincts/new-orleans-simplified.json \
 	exports/topojson/precincts/louisiana.json \
 	exports/topojson/precincts/louisiana-simplified.json

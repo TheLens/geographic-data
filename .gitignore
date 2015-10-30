@@ -1,7 +1,10 @@
-scripts
-temp
-tmp
+scripts/*
+shp/*
+temp/*
+tmp/*
+zip/*
 
-.DS_Store
+Makefile.projects
+
+*.DS_Store
 *.pyc
-

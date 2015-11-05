@@ -1,30 +1,39 @@
 
 .SECONDARY:
 
-.PHONY: bese congress fq_economic_development_district help legislature neighborhoods opsb parishes precincts water
+.PHONY: bese \
+	congress \
+	fq_economic_development_district \
+	help \
+	legislature \
+	neighborhoods \
+	opsb \
+	parishes \
+	precincts \
+	water
 
 help:
-  @echo There is no default command. Choose from these commands:
-  @echo '  bese                             -- Creates files for Board of Elementary and Secondary Education districts.'
-  @echo '  congress                         -- Creates files for U.S. Congress districts.'
-  @echo '  fq_economic_development_district -- Creates files for French Quarter Economic Development District.'
-  @echo '  help                             -- Show available commands.'
-  @echo '  legislature                      -- Creates legislature district files.'
-  @echo '  neighborhoods                    -- Creates neighborhood files (Orleans Parish).'
-  @echo '  opsb                             -- Creates files for Orleans Parish School Board districts.'
-  @echo '  parishes                         -- Creates parish files (statewide and Orleans Parish).'
-  @echo '  precincts                        -- Creates precinct files (Orleans Parish).'
-  @echo '  water                            -- Creates water files (Gulf of Mexico, Lake Pontchartrain and Mississippi River).'
+	@echo There is no default command. Choose from these commands:
+	@echo '  bese                             -- Creates files for Board of Elementary and Secondary Education districts.'
+	@echo '  congress                         -- Creates files for U.S. Congress districts.'
+	@echo '  fq_economic_development_district -- Creates files for French Quarter Economic Development District.'
+	@echo '  help                             -- Show available commands.'
+	@echo '  legislature                      -- Creates legislature district files.'
+	@echo '  neighborhoods                    -- Creates neighborhood files (Orleans Parish).'
+	@echo '  opsb                             -- Creates files for Orleans Parish School Board districts.'
+	@echo '  parishes                         -- Creates parish files (statewide and Orleans Parish).'
+	@echo '  precincts                        -- Creates precinct files (Orleans Parish).'
+	@echo '  water                            -- Creates water files (Gulf of Mexico, Lake Pontchartrain and Mississippi River).'
 
 all: water \
-  parishes \
-  precincts \
-  neighborhoods \
-  bese \
-  fq_economic_development_district \
-  opsb \
-  legislature \
-  congress
+	parishes \
+	precincts \
+	neighborhoods \
+	bese \
+	fq_economic_development_district \
+	opsb \
+	legislature \
+	congress
 
 #############################
 #                           #
@@ -34,59 +43,71 @@ all: water \
 
 # Download zipped shapefiles from House website
 zip/congress/congress.zip:
-  @mkdir -p $(dir $@)
-  @curl -sS -o $@.download 'http://www.house.louisiana.gov/H_Redistricting2011/ShapfilesAnd2010CensusBlockEquivFiles/Shapefile%20-%20Congress%20-%20Act%202%20(HB6)%20of%20the%202011%20ES.zip'
-  @mv $@.download $@
+	@mkdir -p $(dir $@)
+	@curl -sS -o $@.download 'http://www.house.louisiana.gov/H_Redistricting2011/ShapfilesAnd2010CensusBlockEquivFiles/Shapefile%20-%20Congress%20-%20Act%202%20(HB6)%20of%20the%202011%20ES.zip'
+	@mv $@.download $@
 
 # Unzip downloaded .zip files.
 shp/congress/%-extracted.shp: zip/congress/%.zip
-  @mkdir -p $(dir $@)
+	@mkdir -p $(dir $@)
 
-  @# Extract .zip contents to temporary folder
-  @mkdir -p tmp
-  @unzip -q -o -d tmp $<
+	@# Extract .zip contents to temporary folder
+	@mkdir -p tmp
+	@unzip -q -o -d tmp $<
 
-  @for file in tmp/*.*; do \
-    fullfile=$$(basename "$$file") && \
-    filename=$${fullfile%.*} && \
-    fileextension="$${file##*.}" && \
-    cp "$$file" "$(dir $@)$*-extracted.$$fileextension" ; \
-  done
+	@for file in tmp/*.*; do \
+		fullfile=$$(basename "$$file") && \
+		filename=$${fullfile%.*} && \
+		fileextension="$${file##*.}" && \
+		cp "$$file" "$(dir $@)$*-extracted.$$fileextension" ; \
+	done
 
-  @rm -rf tmp
+	@rm -rf tmp
 
 # Fix CRS
-exports/shp/congress/%.shp: shp/congress/%-extracted.shp
-  @mkdir -p $(dir $@)
-  @ogr2ogr -f 'ESRI Shapefile' -t_srs "EPSG:4326" $@ $<
+shp/congress/%-crs.shp: shp/congress/%-extracted.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' -t_srs "EPSG:4326" $@ $<
+
+# Remove water
+exports/shp/congress/congress.shp: shp/congress/congress-crs.shp \
+	exports/shp/water/gulf-of-mexico.shp
+
+	@mkdir -p $(dir $@)
+	@echo '<OGRVRTDataSource><OGRVRTLayer name="congress-crs"><SrcDataSource>$<</SrcDataSource></OGRVRTLayer><OGRVRTLayer name="gulf-of-mexico"><SrcDataSource>exports/shp/water/gulf-of-mexico.shp</SrcDataSource></OGRVRTLayer></OGRVRTDataSource>' | \
+		ogr2ogr $@ /vsistdin/ \
+		-dialect sqlite \
+		-sql "SELECT ST_Difference(congress.GEOMETRY, ST_Buffer(gulf.GEOMETRY, 0.0000001)) AS geometry, \
+				congress.* \
+			FROM 'congress-crs' AS congress, 'gulf-of-mexico' AS gulf"
 
 # Simplify geometries
 exports/shp/congress/congress-simplified.shp: exports/shp/congress/congress.shp
-  @mkdir -p $(dir $@)
-  @ogr2ogr -f 'ESRI Shapefile' \
-    $@ $< \
-    -overwrite \
-    -simplify 0.0003 \
-    -dialect sqlite \
-    -sql "SELECT congress.GEOMETRY AS geometry, \
-      congress.DISTRICT_I AS district \
-      FROM congress"
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-overwrite \
+		-simplify 0.0003 \
+		-dialect sqlite \
+		-sql "SELECT congress.GEOMETRY AS geometry, \
+			congress.DISTRICT_I AS district \
+			FROM congress"
 
 # Export to other file formats
 exports/geojson/congress/%.json: exports/shp/congress/%.shp
-  @mkdir -p $(dir $@)
-  @rm -f $@
-  @ogr2ogr -f 'GeoJSON' $@ $<
+	@mkdir -p $(dir $@)
+	@rm -f $@
+	@ogr2ogr -f 'GeoJSON' $@ $<
 exports/topojson/congress/%.json: exports/shp/congress/%.shp
-  @mkdir -p $(dir $@)
-  @topojson -o $@ $< -p
+	@mkdir -p $(dir $@)
+	@topojson -o $@ $< -p
 
 congress: exports/shp/congress/congress.shp \
-  exports/shp/congress/congress-simplified.shp \
-  exports/geojson/congress/congress.json \
-  exports/geojson/congress/congress-simplified.json \
-  exports/topojson/congress/congress.json \
-  exports/topojson/congress/congress-simplified.json
+	exports/shp/congress/congress-simplified.shp \
+	exports/geojson/congress/congress.json \
+	exports/geojson/congress/congress-simplified.json \
+	exports/topojson/congress/congress.json \
+	exports/topojson/congress/congress-simplified.json
 
 ###########################
 #                         #
@@ -96,79 +117,180 @@ congress: exports/shp/congress/congress.shp \
 
 # Download zipped shapefiles from House website
 zip/legislature/house.zip:
-  @mkdir -p $(dir $@)
-  @curl -sS -o $@.download 'http://www.house.louisiana.gov/H_Redistricting2011/ShapfilesAnd2010CensusBlockEquivFiles/Shapefile%20-%20House%20-%20Act%201%20(HB1)%20of%20the%202011%20ES.zip'
-  @mv $@.download $@
+	@mkdir -p $(dir $@)
+	@curl -sS -o $@.download 'http://www.house.louisiana.gov/H_Redistricting2011/ShapfilesAnd2010CensusBlockEquivFiles/Shapefile%20-%20House%20-%20Act%201%20(HB1)%20of%20the%202011%20ES.zip'
+	@mv $@.download $@
 zip/legislature/senate.zip:
-  @mkdir -p $(dir $@)
-  @curl -sS -o $@.download 'http://www.house.louisiana.gov/H_Redistricting2011/ShapfilesAnd2010CensusBlockEquivFiles/Shapefile%20-%20Senate%20-%20Act%2024%20(SB1)%20of%20the%202011%20ES.zip'
-  @mv $@.download $@
+	@mkdir -p $(dir $@)
+	@curl -sS -o $@.download 'http://www.house.louisiana.gov/H_Redistricting2011/ShapfilesAnd2010CensusBlockEquivFiles/Shapefile%20-%20Senate%20-%20Act%2024%20(SB1)%20of%20the%202011%20ES.zip'
+	@mv $@.download $@
 
 # Unzip downloaded .zip files.
 shp/legislature/%-extracted.shp: zip/legislature/%.zip
-  @mkdir -p $(dir $@)
+	@mkdir -p $(dir $@)
 
-  @# Extract .zip contents to temporary folder
-  @mkdir -p tmp
-  @unzip -q -o -d tmp $<
+	@# Extract .zip contents to temporary folder
+	@mkdir -p tmp
+	@unzip -q -o -d tmp $<
 
-  @for file in tmp/*.*; do \
-    fullfile=$$(basename "$$file") && \
-    filename=$${fullfile%.*} && \
-    fileextension="$${file##*.}" && \
-    cp "$$file" "$(dir $@)$*-extracted.$$fileextension" ; \
-  done
+	@for file in tmp/*.*; do \
+		fullfile=$$(basename "$$file") && \
+		filename=$${fullfile%.*} && \
+		fileextension="$${file##*.}" && \
+		cp "$$file" "$(dir $@)$*-extracted.$$fileextension" ; \
+	done
 
-  @rm -rf tmp
+	@rm -rf tmp
 
 # Fix CRS
-exports/shp/legislature/%.shp: shp/legislature/%-extracted.shp
-  @mkdir -p $(dir $@)
-  @ogr2ogr -f 'ESRI Shapefile' -t_srs "EPSG:4326" $@ $<
+shp/legislature/%-crs.shp: shp/legislature/%-extracted.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' -t_srs "EPSG:4326" $@ $<
+
+# Remove water
+shp/legislature/house-no-lake.shp: shp/legislature/house-crs.shp \
+	exports/shp/water/lake-pontchartrain.shp
+
+	@mkdir -p $(dir $@)
+	@echo '<OGRVRTDataSource><OGRVRTLayer name="house-crs"><SrcDataSource>$<</SrcDataSource></OGRVRTLayer><OGRVRTLayer name="lake-pontchartrain"><SrcDataSource>exports/shp/water/lake-pontchartrain.shp</SrcDataSource></OGRVRTLayer></OGRVRTDataSource>' | \
+		ogr2ogr $@ /vsistdin/ \
+		-dialect sqlite \
+		-sql "SELECT ST_Difference(house.GEOMETRY, lake.GEOMETRY) AS geometry, \
+				house.* \
+			FROM 'house-crs' AS house, 'lake-pontchartrain' AS lake"
+exports/shp/legislature/house.shp: shp/legislature/house-no-lake.shp \
+	exports/shp/water/gulf-of-mexico.shp
+
+	@mkdir -p $(dir $@)
+
+	@# A. This method takes about xx minutes.
+	@# A-1.) Diffing only coastal precincts and Gulf of Mexico
+	@echo '<OGRVRTDataSource><OGRVRTLayer name="house-no-lake"><SrcDataSource>$<</SrcDataSource></OGRVRTLayer><OGRVRTLayer name="gulf-of-mexico"><SrcDataSource>exports/shp/water/gulf-of-mexico.shp</SrcDataSource></OGRVRTLayer></OGRVRTDataSource>' | \
+		ogr2ogr -f 'ESRI Shapefile' \
+			shp/legislature/house-coastal-diff.shp /vsistdin/ \
+			-overwrite \
+			-dialect sqlite \
+			-sql "SELECT ST_Difference(house.GEOMETRY, ST_Buffer(gulf.GEOMETRY, 0.0000001)) AS geometry, house.* \
+				FROM 'house-no-lake' as house, 'gulf-of-mexico' AS gulf \
+				WHERE OBJECTID = '47' OR \
+					OBJECTID = '49' OR \
+					OBJECTID = '50' OR \
+					OBJECTID = '51' OR \
+					OBJECTID = '53' OR \
+					OBJECTID = '54' OR \
+					OBJECTID = '84' OR \
+					OBJECTID = '103' OR \
+					OBJECTID = '105'"
+	@# A-2.) Removing coastal precincts from Louisiana precincts
+	@ogr2ogr -f 'ESRI Shapefile' \
+		shp/legislature/house-non-coastal.shp $< \
+		-overwrite \
+		-where 'OBJECTID != "47" AND \
+			OBJECTID != "49" AND \
+			OBJECTID != "50" AND \
+			OBJECTID != "51" AND \
+			OBJECTID != "53" AND \
+			OBJECTID != "54" AND \
+			OBJECTID != "84" AND \
+			OBJECTID != "103" AND \
+			OBJECTID != "105"'
+	@# A-3.) Joining the two files (Louisiana precincts minus coastal precincts
+	@# and the land-only portion of coastal precincts).
+	@ogr2ogr -update -append -nln house $@ shp/legislature/house-coastal-diff.shp
+	@ogr2ogr -update -append -nln house $@ shp/legislature/house-non-coastal.shp
+
+shp/legislature/senate-no-lake.shp: shp/legislature/senate-crs.shp \
+	exports/shp/water/lake-pontchartrain.shp
+
+	@mkdir -p $(dir $@)
+	@echo '<OGRVRTDataSource><OGRVRTLayer name="senate-crs"><SrcDataSource>$<</SrcDataSource></OGRVRTLayer><OGRVRTLayer name="lake-pontchartrain"><SrcDataSource>exports/shp/water/lake-pontchartrain.shp</SrcDataSource></OGRVRTLayer></OGRVRTDataSource>' | \
+		ogr2ogr $@ /vsistdin/ \
+		-dialect sqlite \
+		-sql "SELECT ST_Difference(senate.GEOMETRY, lake.GEOMETRY) AS geometry, \
+				senate.* \
+			FROM 'senate-crs' AS senate, 'lake-pontchartrain' AS lake"
+exports/shp/legislature/senate.shp: shp/legislature/senate-no-lake.shp \
+	exports/shp/water/gulf-of-mexico.shp
+
+	@mkdir -p $(dir $@)
+
+	@# A. This method takes about xx minutes.
+	@# A-1.) Diffing only coastal precincts and Gulf of Mexico
+	@echo '<OGRVRTDataSource><OGRVRTLayer name="senate-no-lake"><SrcDataSource>$<</SrcDataSource></OGRVRTLayer><OGRVRTLayer name="gulf-of-mexico"><SrcDataSource>exports/shp/water/gulf-of-mexico.shp</SrcDataSource></OGRVRTLayer></OGRVRTDataSource>' | \
+		ogr2ogr -f 'ESRI Shapefile' \
+			shp/legislature/senate-coastal-diff.shp /vsistdin/ \
+			-overwrite \
+			-dialect sqlite \
+			-sql "SELECT ST_Difference(senate.GEOMETRY, ST_Buffer(gulf.GEOMETRY, 0.0000001)) AS geometry, senate.* \
+				FROM 'senate-no-lake' as senate, 'gulf-of-mexico' AS gulf \
+				WHERE OBJECTID = '1' OR \
+					OBJECTID = '8' OR \
+					OBJECTID = '20' OR \
+					OBJECTID = '21' OR \
+					OBJECTID = '22' OR \
+					OBJECTID = '25' OR \
+					OBJECTID = '26'"
+	@# A-2.) Removing coastal precincts from Louisiana precincts
+	@ogr2ogr -f 'ESRI Shapefile' \
+		shp/legislature/senate-non-coastal.shp $< \
+		-overwrite \
+		-where 'OBJECTID != "1" AND \
+			OBJECTID != "8" AND \
+			OBJECTID != "20" AND \
+			OBJECTID != "21" AND \
+			OBJECTID != "22" AND \
+			OBJECTID != "25" AND \
+			OBJECTID != "26"'
+	@# A-3.) Joining the two files (Louisiana precincts minus coastal precincts
+	@# and the land-only portion of coastal precincts).
+	@ogr2ogr -update -append -nln senate $@ shp/legislature/senate-coastal-diff.shp
+	@ogr2ogr -update -append -nln senate $@ shp/legislature/senate-non-coastal.shp
+
+
 
 # Simplify geometries
 exports/shp/legislature/house-simplified.shp: exports/shp/legislature/house.shp
-  @mkdir -p $(dir $@)
-  @ogr2ogr -f 'ESRI Shapefile' \
-    $@ $< \
-    -overwrite \
-    -simplify 0.0003 \
-    -dialect sqlite \
-    -sql "SELECT house.GEOMETRY AS geometry, \
-      house.DISTRICT_I AS district \
-      FROM house"
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-overwrite \
+		-simplify 0.0003 \
+		-dialect sqlite \
+		-sql "SELECT house.GEOMETRY AS geometry, \
+		house.DISTRICT_I AS district \
+		FROM house"
 exports/shp/legislature/senate-simplified.shp: exports/shp/legislature/senate.shp
-  @mkdir -p $(dir $@)
-  @ogr2ogr -f 'ESRI Shapefile' \
-    $@ $< \
-    -overwrite \
-    -simplify 0.0003 \
-    -dialect sqlite \
-    -sql "SELECT senate.GEOMETRY AS geometry, \
-      senate.DISTRICT_I AS district \
-      FROM senate"
+	@mkdir -p $(dir $@)
+	@ogr2ogr -f 'ESRI Shapefile' \
+		$@ $< \
+		-overwrite \
+		-simplify 0.0003 \
+		-dialect sqlite \
+		-sql "SELECT senate.GEOMETRY AS geometry, \
+			senate.DISTRICT_I AS district \
+			FROM senate"
 
 # Export to other file formats
 exports/geojson/legislature/%.json: exports/shp/legislature/%.shp
-  @mkdir -p $(dir $@)
-  @rm -f $@
-  @ogr2ogr -f 'GeoJSON' $@ $<
+	@mkdir -p $(dir $@)
+	@rm -f $@
+	@ogr2ogr -f 'GeoJSON' $@ $<
 exports/topojson/legislature/%.json: exports/shp/legislature/%.shp
-  @mkdir -p $(dir $@)
-  @topojson -o $@ $< -p
+	@mkdir -p $(dir $@)
+	@topojson -o $@ $< -p
 
 legislature: exports/shp/legislature/house.shp \
-  exports/shp/legislature/senate.shp \
-  exports/shp/legislature/house-simplified.shp \
-  exports/shp/legislature/senate-simplified.shp \
-  exports/geojson/legislature/house.json \
-  exports/geojson/legislature/senate.json \
-  exports/geojson/legislature/house-simplified.json \
-  exports/geojson/legislature/senate-simplified.json \
-  exports/topojson/legislature/house.json \
-  exports/topojson/legislature/senate.json \
-  exports/topojson/legislature/house-simplified.json \
-  exports/topojson/legislature/senate-simplified.json
+	exports/shp/legislature/senate.shp \
+	exports/shp/legislature/house-simplified.shp \
+	exports/shp/legislature/senate-simplified.shp \
+	exports/geojson/legislature/house.json \
+	exports/geojson/legislature/senate.json \
+	exports/geojson/legislature/house-simplified.json \
+	exports/geojson/legislature/senate-simplified.json \
+	exports/topojson/legislature/house.json \
+	exports/topojson/legislature/senate.json \
+	exports/topojson/legislature/house-simplified.json \
+	exports/topojson/legislature/senate-simplified.json
 
 ###########################################
 #                                         #

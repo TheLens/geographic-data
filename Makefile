@@ -509,8 +509,6 @@ exports/topojson/state-districts/legislature/senate-simplified.json: exports/top
 	@mapshaper \
 		-i tmp/$(notdir $@) \
 		-o $@
-	@# TODO: Remove islands in Gulf.
-	@# -filter '"$.area" > 5e-5'
 
 	@rm -rf tmp
 
@@ -1779,18 +1777,16 @@ exports/shp/precincts/state/louisiana-fullsize.shp: shp/precincts/louisiana-crs.
 		tmp/louisiana.shp tmp/non-coastal.shp
 
 	@# JOIN the FIPS codes and names by using CSV with codes + parish names.
-	@# TODO: Don't use PostgreSQL for this. Some users might not have it installed.
-	@# Even if they do, don't rely on it for this one small task.
+	@# TODO: Don't use PostgreSQL for this. Some users might not have it installed. Even if they do, this is a big dependency for a single task.
 	@dropdb --if-exists templouisianadb
 	@createdb templouisianadb
 	@psql templouisianadb -c "CREATE EXTENSION postgis;"
 	@shp2pgsql -s 4326 tmp/louisiana louisiana | psql -d templouisianadb
 	@psql templouisianadb -c "CREATE TABLE fipslink (FIPS varchar(3), name varchar(50));"
-	@psql templouisianadb -c "\
-		COPY fipslink (FIPS, name) \
+	@psql templouisianadb -c "COPY fipslink (FIPS, name) \
 		FROM '$(shell pwd)/data/fips-codes.csv' DELIMITER ',' CSV HEADER;"
-	@pgsql2shp -f tmp/louisiana.shp templouisianadb "\
-		SELECT louisiana.*, fipslink.name \
+	@pgsql2shp -f tmp/louisiana.shp templouisianadb "SELECT louisiana.*, \
+			fipslink.name \
 		FROM louisiana \
 		JOIN fipslink ON louisiana.countyfp10 = fipslink.fips;"
 	@dropdb templouisianadb
@@ -1805,7 +1801,7 @@ exports/shp/precincts/state/louisiana-fullsize.shp: shp/precincts/louisiana-crs.
 				louisiana.NAME AS parishname \
 			FROM louisiana"
 
-	@# rm -rf tmp
+	@rm -rf tmp
 
 exports/shp/precincts/parish/caddo-fullsize.shp: shp/precincts/caddo-crs.shp
 	@mkdir -p $(dir $@)
@@ -2153,9 +2149,10 @@ precincts: \
 	exports/shp/precincts/parish/lafayette-simplified.shp \
 	exports/shp/precincts/parish/jefferson-simplified.shp \
 	exports/shp/precincts/parish/orleans-simplified.shp \
-	exports/shp/precincts/parish/st-tammany-simplified.shp
+	exports/shp/precincts/parish/st-tammany-simplified.shp \
+	exports/shp/precincts/state/louisiana-simplified.shp
 
-	@# exports/shp/precincts/louisiana-simplified.shp
+	@# TODO: exports/shp/precincts/parish/st-bernard-simplified.shp
 
 ###########
 #         #
@@ -2362,6 +2359,114 @@ shp/water/tl_2015_22075_areawater-ms-river-features.shp: shp/water/tl_2015_22075
 		-clipsrc -95.0 29.083 -80.0 35.0 \
 		-where 'HYDROID = "1102295075770" OR \
 				HYDROID = "11081627078"'
+
+# Red River
+shp/water/tl_2015_22015_areawater-red-river-features.shp: shp/water/tl_2015_22015_areawater-crs.shp
+	@# Bossier Parish (015)
+	@ogr2ogr \
+		-f 'ESRI Shapefile' \
+		$@ $< \
+		-where 'HYDROID = "110465281085" OR \
+				HYDROID = "1103700178476" OR \
+				HYDROID = "110465281106" OR \
+				HYDROID = "110465281087" OR \
+				HYDROID = "1103700178474" OR \
+				HYDROID = "110465281103" OR \
+				HYDROID = "110465281095" OR \
+				HYDROID = "110465281096" OR \
+				HYDROID = "110465281102" OR \
+				HYDROID = "1103700178475" OR \
+				HYDROID = "110465281108" OR \
+				HYDROID = "1104762759584" OR \
+				HYDROID = "110465281099" OR \
+				HYDROID = "110465281107" OR \
+				HYDROID = "110465281080" OR \
+				HYDROID = "110465281081" OR \
+				HYDROID = "110465281082" OR \
+				HYDROID = "110465281083" OR \
+				HYDROID = "110465281094" OR \
+				HYDROID = "110465281093" OR \
+				HYDROID = "110465281092" OR \
+				HYDROID = "110465281091" OR \
+				HYDROID = "110465281090" OR \
+				HYDROID = "110465281089" OR \
+				HYDROID = "110465281088" OR \
+				HYDROID = "110465281315" OR \
+				HYDROID = "110465281097"'
+shp/water/tl_2015_22017_areawater-red-river-features.shp: shp/water/tl_2015_22017_areawater-crs.shp
+	@# Caddo Parish (017)
+	@ogr2ogr \
+		-f 'ESRI Shapefile' \
+		$@ $< \
+		-where 'HYDROID = "110585169260" OR \
+				HYDROID = "110585174635" OR \
+				HYDROID = "110585169265" OR \
+				HYDROID = "110585169229" OR \
+				HYDROID = "1103700178473" OR \
+				HYDROID = "1103700178469" OR \
+				HYDROID = "110585169269" OR \
+				HYDROID = "110585169231" OR \
+				HYDROID = "1103700178459" OR \
+				HYDROID = "110585169225" OR \
+				HYDROID = "110585169233" OR \
+				HYDROID = "1104469987400" OR \
+				HYDROID = "1104762759583" OR \
+				HYDROID = "110585169235" OR \
+				HYDROID = "110585169239" OR \
+				HYDROID = "110585169236" OR \
+				HYDROID = "110585174537" OR \
+				HYDROID = "110585169261" OR \
+				HYDROID = "110585169270" OR \
+				HYDROID = "110585169266" OR \
+				HYDROID = "110585169226" OR \
+				HYDROID = "110585169256" OR \
+				HYDROID = "110585169253" OR \
+				HYDROID = "110585169264" OR \
+				HYDROID = "110585169241" OR \
+				HYDROID = "110585169230" OR \
+				HYDROID = "110585169267" OR \
+				HYDROID = "110585169232"'
+
+# Black Bayou
+shp/water/tl_2015_22017_areawater-black-bayou-features.shp: shp/water/tl_2015_22017_areawater-crs.shp
+	@# Caddo Parish (089)
+	@mkdir -p $(dir $@)
+	@# TODO: Check shape on map.
+	@ogr2ogr \
+		-f 'ESRI Shapefile' \
+		$@ $< \
+		-where 'HYDROID = "110585172537" OR \
+				HYDROID = "110585174659" OR \
+				HYDROID = "110585174412" OR \
+				HYDROID = "110585174669"'
+
+# Caddo Lake
+shp/water/tl_2015_22017_areawater-caddo-lake-features.shp: shp/water/tl_2015_22017_areawater-crs.shp
+	@# Caddo Parish (089)
+	@mkdir -p $(dir $@)
+	@# TODO: Check shape on map.
+	@ogr2ogr \
+		-f 'ESRI Shapefile' \
+		$@ $< \
+		-where 'HYDROID = "110585170274" OR \
+				HYDROID = "110585171112" OR \
+				HYDROID = "110585174526" OR \
+				HYDROID = "110585170442" OR \
+				HYDROID = "110585170593" OR \
+				HYDROID = "110585170499"'
+
+# Cross Lake
+shp/water/tl_2015_22017_areawater-cross-lake-features.shp: shp/water/tl_2015_22017_areawater-crs.shp
+	@# Caddo Parish (089)
+	@mkdir -p $(dir $@)
+	@# TODO: Check shape on map.
+	@ogr2ogr \
+		-f 'ESRI Shapefile' \
+		$@ $< \
+		-where 'HYDROID = "110585174628" OR \
+				HYDROID = "110585174674" OR \
+				HYDROID = "110585170377" OR \
+				HYDROID = "110585170381"'
 
 # Lake Cataouatche
 shp/water/tl_2015_22089_areawater-lake-cataouatche-features.shp: shp/water/tl_2015_22089_areawater-crs.shp
@@ -2816,6 +2921,55 @@ shp/water/missriver.shp: \
 			-nln missriver \
 			$@ $$file; \
 	done
+# Merge Red River shapefiles.
+shp/water/redriver.shp: \
+	shp/water/tl_2015_22015_areawater-red-river-features.shp \
+	shp/water/tl_2015_22017_areawater-red-river-features.shp
+
+	@for file in $^; do \
+		ogr2ogr \
+			-f 'ESRI Shapefile' \
+			-update \
+			-append \
+			-nln redriver \
+			$@ $$file; \
+	done
+# Merge Black Bayou shapefiles.
+shp/water/blackbayou.shp: \
+	shp/water/tl_2015_22017_areawater-black-bayou-features.shp
+
+	@for file in $^; do \
+		ogr2ogr \
+			-f 'ESRI Shapefile' \
+			-update \
+			-append \
+			-nln blackbayou \
+			$@ $$file; \
+	done
+# Merge Caddo Lake shapefiles.
+shp/water/caddolake.shp: \
+	shp/water/tl_2015_22017_areawater-caddo-lake-features.shp
+
+	@for file in $^; do \
+		ogr2ogr \
+			-f 'ESRI Shapefile' \
+			-update \
+			-append \
+			-nln caddolake \
+			$@ $$file; \
+	done
+# Merge Cross Lake shapefiles.
+shp/water/crosslake.shp: \
+	shp/water/tl_2015_22017_areawater-cross-lake-features.shp
+
+	@for file in $^; do \
+		ogr2ogr \
+			-f 'ESRI Shapefile' \
+			-update \
+			-append \
+			-nln crosslake \
+			$@ $$file; \
+	done
 # Merge Lake Cataouatche shapefiles
 shp/water/lakecataouatche.shp: \
 	shp/water/tl_2015_22089_areawater-lake-cataouatche-features.shp \
@@ -2927,6 +3081,34 @@ exports/shp/water/mississippi-river-fullsize.shp: shp/water/missriver.shp
 		$@ $< \
 		-dialect sqlite \
 		-sql "SELECT st_union(Geometry) FROM missriver"
+exports/shp/water/red-river-fullsize.shp: shp/water/redriver.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr \
+		-f 'ESRI Shapefile' \
+		$@ $< \
+		-dialect sqlite \
+		-sql "SELECT st_union(Geometry) FROM redriver"
+exports/shp/water/black-bayou-fullsize.shp: shp/water/blackbayou.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr \
+		-f 'ESRI Shapefile' \
+		$@ $< \
+		-dialect sqlite \
+		-sql "SELECT st_union(Geometry) FROM blackbayou"
+exports/shp/water/caddo-lake-fullsize.shp: shp/water/caddolake.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr \
+		-f 'ESRI Shapefile' \
+		$@ $< \
+		-dialect sqlite \
+		-sql "SELECT st_union(Geometry) FROM caddolake"
+exports/shp/water/cross-lake-fullsize.shp: shp/water/crosslake.shp
+	@mkdir -p $(dir $@)
+	@ogr2ogr \
+		-f 'ESRI Shapefile' \
+		$@ $< \
+		-dialect sqlite \
+		-sql "SELECT st_union(Geometry) FROM crosslake"
 exports/shp/water/lake-cataouatche-fullsize.shp: shp/water/lakecataouatche.shp
 	@mkdir -p $(dir $@)
 	@ogr2ogr \
@@ -3018,11 +3200,15 @@ exports/shp/water/%-simplified.shp: exports/geojson/water/%-simplified.json
 		$@ $<
 
 water: \
+	exports/shp/water/black-bayou-simplified.shp \
+	exports/shp/water/caddo-lake-simplified.shp \
+	exports/shp/water/cross-lake-simplified.shp \
 	exports/shp/water/gulf-of-mexico-simplified.shp \
 	exports/shp/water/lake-cataouatche-simplified.shp \
 	exports/shp/water/lake-pontchartrain-simplified.shp \
 	exports/shp/water/lake-salvador-simplified.shp \
 	exports/shp/water/little-lake-simplified.shp \
 	exports/shp/water/mississippi-river-simplified.shp \
+	exports/shp/water/red-river-simplified.shp \
 	exports/shp/water/the-pen-simplified.shp \
 	exports/shp/water/turtle-bay-simplified.shp

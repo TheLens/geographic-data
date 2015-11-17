@@ -1649,6 +1649,16 @@ shp/precincts/east-baton-rouge-crs.shp: tmp/precincts/east-baton-rouge.json
 		$@ $< \
 		-t_srs "EPSG:4326"
 
+tmp/precincts/lafayette.json:
+	@mkdir -p $(dir $@)
+	@python scripts/download_lafayette_precincts.py $@
+shp/precincts/lafayette-crs.shp: tmp/precincts/lafayette.json
+	@mkdir -p $(dir $@)
+	@ogr2ogr \
+		-f 'ESRI Shapefile' \
+		$@ $< \
+		-t_srs "EPSG:4326"
+
 # Unzip downloaded .zip files.
 shp/precincts/%-extracted.shp: zip/precincts/%.zip
 	@mkdir -p $(dir $@)
@@ -1832,6 +1842,18 @@ exports/shp/precincts/parish/east-baton-rouge-fullsize.shp: shp/precincts/east-b
 					precincts.VOTING_PRE AS precinctid \
 				FROM 'east-baton-rouge-crs' AS precincts, 'mississippi-river-fullsize' AS river"
 
+exports/shp/precincts/parish/lafayette-fullsize.shp: shp/precincts/lafayette-crs.shp
+	@mkdir -p $(dir $@)
+
+	@# Remove Mississippi River.
+	@ogr2ogr \
+		-f 'ESRI Shapefile' \
+		$@ $< \
+		-dialect sqlite \
+		-sql "SELECT precincts.GEOMETRY AS geometry, \
+				precincts.NAME1_ AS precinctid \
+			FROM 'lafayette-crs' AS precincts"
+
 exports/shp/precincts/parish/jefferson-fullsize.shp: shp/precincts/jefferson-crs.shp \
 	exports/shp/water/gulf-of-mexico-fullsize.shp \
 	exports/shp/water/mississippi-river-fullsize.shp \
@@ -1995,26 +2017,26 @@ exports/shp/precincts/parish/st-tammany-fullsize.shp: shp/precincts/st-tammany-c
 				WHERE precincts.VTD2010 != 'ZZZZZZ'"
 
 # Convert SHP to GeoJSON
-exports/geojson/precincts/state/%-fullsize.json: exports/shp/precincts/%-fullsize.shp
+exports/geojson/precincts/state/%-fullsize.json: exports/shp/precincts/state/%-fullsize.shp
 	@mkdir -p $(dir $@)
 	@ogr2ogr \
 		-f 'GeoJSON' \
 			$@ $<
-exports/geojson/precincts/parish/%-fullsize.json: exports/shp/precincts/%-fullsize.shp
+exports/geojson/precincts/parish/%-fullsize.json: exports/shp/precincts/parish/%-fullsize.shp
 	@mkdir -p $(dir $@)
 	@ogr2ogr \
 		-f 'GeoJSON' \
 			$@ $<
 
 # Convert GeoJSON to TopoJSON
-exports/topojson/precincts/state/%-fullsize.json: exports/geojson/precincts/%-fullsize.json
+exports/topojson/precincts/state/%-fullsize.json: exports/geojson/precincts/state/%-fullsize.json
 	@mkdir -p $(dir $@)
 	@topojson \
 		--no-quantization \
 		--properties \
 		-o $@ \
 		-- $<
-exports/topojson/precincts/parish/%-fullsize.json: exports/geojson/precincts/%-fullsize.json
+exports/topojson/precincts/parish/%-fullsize.json: exports/geojson/precincts/parish/%-fullsize.json
 	@mkdir -p $(dir $@)
 	@topojson \
 		--no-quantization \
@@ -2062,6 +2084,16 @@ exports/topojson/precincts/parish/jefferson-simplified.json: exports/topojson/pr
 		--properties \
 		-s 1e-11 \
 		-q 8E5 \
+		-o $@ \
+		-- $<
+exports/topojson/precincts/parish/lafayette-simplified.json: exports/topojson/precincts/parish/lafayette-fullsize.json
+	@mkdir -p $(dir $@)
+	@# Confirmed good simplification/quantization levels.
+	@topojson \
+		--spherical \
+		--properties \
+		-s 1e-12 \
+		-q 1e6 \
 		-o $@ \
 		-- $<
 exports/topojson/precincts/parish/orleans-simplified.json: exports/topojson/precincts/parish/orleans-fullsize.json
@@ -2118,6 +2150,7 @@ exports/shp/precincts/parish/%-simplified.shp: exports/geojson/precincts/parish/
 precincts: \
 	exports/shp/precincts/parish/caddo-simplified.shp \
 	exports/shp/precincts/parish/east-baton-rouge-simplified.shp \
+	exports/shp/precincts/parish/lafayette-simplified.shp \
 	exports/shp/precincts/parish/jefferson-simplified.shp \
 	exports/shp/precincts/parish/orleans-simplified.shp \
 	exports/shp/precincts/parish/st-tammany-simplified.shp

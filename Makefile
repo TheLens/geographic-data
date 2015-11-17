@@ -1803,17 +1803,92 @@ exports/shp/precincts/state/louisiana-fullsize.shp: shp/precincts/louisiana-crs.
 
 	@rm -rf tmp
 
-exports/shp/precincts/parish/caddo-fullsize.shp: shp/precincts/caddo-crs.shp
+exports/shp/precincts/parish/caddo-fullsize.shp: shp/precincts/caddo-crs.shp \
+	exports/shp/water/red-river-fullsize.shp \
+	exports/shp/water/black-bayou-fullsize.shp \
+	exports/shp/water/caddo-lake-fullsize.shp \
+	exports/shp/water/cross-lake-fullsize.shp
+
 	@mkdir -p $(dir $@)
+	@mkdir -p tmp
+
+	@# Remove Red River.
+	@echo '<OGRVRTDataSource>'\
+			'<OGRVRTLayer name="caddo-crs">'\
+				'<SrcDataSource>$<</SrcDataSource>'\
+			'</OGRVRTLayer>'\
+			'<OGRVRTLayer name="red-river-fullsize">'\
+				'<SrcDataSource>exports/shp/water/red-river-fullsize.shp</SrcDataSource>'\
+			'</OGRVRTLayer>'\
+		'</OGRVRTDataSource>' | \
+		ogr2ogr \
+			-f 'ESRI Shapefile' \
+			tmp/caddo-no-river.shp /vsistdin/ \
+			-dialect sqlite \
+			-sql "SELECT ST_Difference(precincts.GEOMETRY, river.GEOMETRY) AS geometry, \
+					precincts.* \
+				FROM 'caddo-crs' AS precincts, 'red-river-fullsize' AS river"
+
+	@# Remove Black Bayou.
+	@echo '<OGRVRTDataSource>'\
+			'<OGRVRTLayer name="caddo-no-river">'\
+				'<SrcDataSource>tmp/caddo-no-river.shp</SrcDataSource>'\
+			'</OGRVRTLayer>'\
+			'<OGRVRTLayer name="black-bayou-fullsize">'\
+				'<SrcDataSource>exports/shp/water/black-bayou-fullsize.shp</SrcDataSource>'\
+			'</OGRVRTLayer>'\
+		'</OGRVRTDataSource>' | \
+		ogr2ogr \
+			-f 'ESRI Shapefile' \
+			tmp/caddo-no-bayou.shp /vsistdin/ \
+			-dialect sqlite \
+			-sql "SELECT ST_Difference(precincts.GEOMETRY, bayou.GEOMETRY) AS geometry, \
+					precincts.* \
+				FROM 'caddo-no-river' AS precincts, 'black-bayou-fullsize' AS bayou"
+
+	@# Remove Caddo Lake.
+	@echo '<OGRVRTDataSource>'\
+			'<OGRVRTLayer name="caddo-no-bayou">'\
+				'<SrcDataSource>tmp/caddo-no-bayou.shp</SrcDataSource>'\
+			'</OGRVRTLayer>'\
+			'<OGRVRTLayer name="caddo-lake-fullsize">'\
+				'<SrcDataSource>exports/shp/water/caddo-lake-fullsize.shp</SrcDataSource>'\
+			'</OGRVRTLayer>'\
+		'</OGRVRTDataSource>' | \
+		ogr2ogr \
+			-f 'ESRI Shapefile' \
+			tmp/caddo-no-caddo-lake.shp /vsistdin/ \
+			-dialect sqlite \
+			-sql "SELECT ST_Difference(precincts.GEOMETRY, lake.GEOMETRY) AS geometry, \
+					precincts.* \
+				FROM 'caddo-no-bayou' AS precincts, 'caddo-lake-fullsize' AS lake"
+
+	@# Remove Cross Lake.
+	@echo '<OGRVRTDataSource>'\
+			'<OGRVRTLayer name="caddo-no-caddo-lake">'\
+				'<SrcDataSource>tmp/caddo-no-caddo-lake.shp</SrcDataSource>'\
+			'</OGRVRTLayer>'\
+			'<OGRVRTLayer name="cross-lake-fullsize">'\
+				'<SrcDataSource>exports/shp/water/cross-lake-fullsize.shp</SrcDataSource>'\
+			'</OGRVRTLayer>'\
+		'</OGRVRTDataSource>' | \
+		ogr2ogr \
+			-f 'ESRI Shapefile' \
+			tmp/caddo.shp /vsistdin/ \
+			-dialect sqlite \
+			-sql "SELECT ST_Difference(precincts.GEOMETRY, lake.GEOMETRY) AS geometry, \
+					precincts.* \
+				FROM 'caddo-no-caddo-lake' AS precincts, 'cross-lake-fullsize' AS lake"
+
 	@ogr2ogr \
 		-f 'ESRI Shapefile' \
-		$@ $< \
+		$@ tmp/caddo.shp \
 		-dialect sqlite \
-		-sql "SELECT precincts.GEOMETRY AS geometry, \
-				precincts.DISTRICT AS precinctid \
-			FROM 'caddo-crs' as precincts"
+		-sql "SELECT caddo.GEOMETRY AS geometry, \
+				caddo.DISTRICT AS precinctid \
+			FROM caddo"
 
-	@# TODO: Remove Red River, Caddo Lake, Black Bayou Lake and Cross Lake.
+	@rm -rf tmp
 
 exports/shp/precincts/parish/east-baton-rouge-fullsize.shp: shp/precincts/east-baton-rouge-crs.shp \
 	exports/shp/water/mississippi-river-fullsize.shp
@@ -1841,7 +1916,6 @@ exports/shp/precincts/parish/east-baton-rouge-fullsize.shp: shp/precincts/east-b
 exports/shp/precincts/parish/lafayette-fullsize.shp: shp/precincts/lafayette-crs.shp
 	@mkdir -p $(dir $@)
 
-	@# Remove Mississippi River.
 	@ogr2ogr \
 		-f 'ESRI Shapefile' \
 		$@ $< \
@@ -2055,11 +2129,12 @@ exports/topojson/precincts/state/louisiana-simplified.json: exports/topojson/pre
 exports/topojson/precincts/parish/caddo-simplified.json: exports/topojson/precincts/parish/caddo-fullsize.json
 	@mkdir -p $(dir $@)
 	@# Confirmed good simplification/quantization levels.
+	@# The raw file has gaps and simplifications, so okay to simplify heavily.
 	@topojson \
 		--spherical \
 		--properties \
-		-s 1e-11 \
-		-q 1e6 \
+		-s 1e-10 \
+		-q 5e4 \
 		-o $@ \
 		-- $<
 exports/topojson/precincts/parish/east-baton-rouge-simplified.json: exports/topojson/precincts/parish/east-baton-rouge-fullsize.json
@@ -2454,6 +2529,23 @@ shp/water/tl_2015_22017_areawater-caddo-lake-features.shp: shp/water/tl_2015_220
 				HYDROID = "110585170442" OR \
 				HYDROID = "110585170593" OR \
 				HYDROID = "110585170499"'
+shp/water/tl_2015_48203_areawater-caddo-lake-features.shp: shp/water/tl_2015_48203_areawater-crs.shp
+	@# Harrison County, Texas (48203)
+	@mkdir -p $(dir $@)
+	@# TODO: Check shape on map.
+	@ogr2ogr \
+		-f 'ESRI Shapefile' \
+		$@ $< \
+		-where 'HYDROID = "110782899276" OR \
+				HYDROID = "110782899290"'
+shp/water/tl_2015_48315_areawater-caddo-lake-features.shp: shp/water/tl_2015_48315_areawater-crs.shp
+	@# Marion County, Texas (48203)
+	@mkdir -p $(dir $@)
+	@# TODO: Check shape on map.
+	@ogr2ogr \
+		-f 'ESRI Shapefile' \
+		$@ $< \
+		-where 'HYDROID = "110781257841"'
 
 # Cross Lake
 shp/water/tl_2015_22017_areawater-cross-lake-features.shp: shp/water/tl_2015_22017_areawater-crs.shp
@@ -2948,7 +3040,9 @@ shp/water/blackbayou.shp: \
 	done
 # Merge Caddo Lake shapefiles.
 shp/water/caddolake.shp: \
-	shp/water/tl_2015_22017_areawater-caddo-lake-features.shp
+	shp/water/tl_2015_22017_areawater-caddo-lake-features.shp \
+	shp/water/tl_2015_48203_areawater-caddo-lake-features.shp \
+	shp/water/tl_2015_48315_areawater-caddo-lake-features.shp
 
 	@for file in $^; do \
 		ogr2ogr \

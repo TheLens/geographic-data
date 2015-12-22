@@ -1,8 +1,9 @@
-misc/
-scripts/*
+geojson/*
+misc/*
 shp/*
 temp/*
 tmp/*
+topojson/*
 zip/*
 
 Makefile.projects

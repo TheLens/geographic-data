@@ -24,7 +24,7 @@ __Municipal districts__
 * [French Quarter Economic Development District]
 * [Neighborhods]
 * [OPSB]
-* [OPBS w/ precincts]
+* [OPSB with precincts]
 
 __Parishes__
 
@@ -139,7 +139,7 @@ MIT. See [`LICENSE`](LICENSE) for full information.
 [French Quarter Economic Development District]: exports/topojson/municipal-districts/orleans/economic/french-quarter-econ-dev-dist-simplified.json
 [Neighborhods]: exports/topojson/municipal-districts/orleans/neighborhoods/new-orleans-simplified.json
 [OPSB]: exports/topojson/municipal-districts/orleans/opsb/opsb-simplified.json
-[OPBS w/ precincts]: exports/topojson/municipal-districts/orleans/opsb/opsb-simplified.json
+[OPSB with precincts]: exports/topojson/municipal-districts/orleans/opsb/opsb-precincts-simplified.json
 
 [Parishes]: exports/topojson/parishes/parishes-simplified.json
 

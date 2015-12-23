@@ -2262,28 +2262,28 @@ precincts: \
 	exports/shp/precincts/state/louisiana-simplified.shp
 
 
-###############
-#             #
-#  Buildings  #
-#             #
-###############
+##############
+#            #
+#  Property  #
+#            #
+##############
 
 # Download New Orleans parcel data
-zip/buildings/parcels/NOLA_Parcels.zip:
+zip/property/parcels/NOLA_Parcels.zip:
 	@mkdir -p $(dir $@)
 	@curl -sS -o $@.download 'https://data.nola.gov/api/geospatial/e962-egyh?method=export&format=Shapefile'
 	@mv $@.download $@
-zip/buildings/buildings/louisiana-latest.shp.zip:
+zip/property/buildings/louisiana-latest.shp.zip:
 	@# http://download.geofabrik.de/north-america/us/louisiana.html
 	@mkdir -p $(dir $@)
 	@curl -sS -o $@.download 'http://download.geofabrik.de/north-america/us/$(notdir $@)'
 	@mv $@.download $@
 
 # Unzip
-shp/buildings/parcels/geo_export_1f635c90-de74-4530-bfec-bf3e12827f60.shp: zip/buildings/parcels/NOLA_Parcels.zip
+shp/property/parcels/geo_export_1f635c90-de74-4530-bfec-bf3e12827f60.shp: zip/buildings/parcels/NOLA_Parcels.zip
 	@mkdir -p $(dir $@)
 	@unzip -q -o -d $@ $<
-shp/buildings/buildings/buildings.shp: zip/buildings/buildings/louisiana-latest.shp.zip
+shp/property/buildings/buildings.shp: zip/property/buildings/louisiana-latest.shp.zip
 	@mkdir -p $(dir $@)
 	@rm -rf tmp && mkdir tmp
 	@unzip -q -o -d tmp $<
@@ -2291,20 +2291,20 @@ shp/buildings/buildings/buildings.shp: zip/buildings/buildings/louisiana-latest.
 	@rm -rf tmp
 
 # Convert U.S. Census shapefiles to WGS 84.
-shp/buildings/parcels/new-orleans-crs.shp: shp/buildings/parcels/geo_export_1f635c90-de74-4530-bfec-bf3e12827f60.shp
+shp/property/parcels/new-orleans-crs.shp: shp/property/parcels/geo_export_1f635c90-de74-4530-bfec-bf3e12827f60.shp
 	@mkdir -p $(dir $@)
 	@ogr2ogr \
 		-f 'ESRI Shapefile' \
 		$@ $< \
 		-t_srs 'EPSG:4326'
-shp/buildings/buildings/la-osm-crs.shp: shp/buildings/buildings/buildings.shp
+shp/property/buildings/la-osm-crs.shp: shp/property/buildings/buildings.shp
 	@mkdir -p $(dir $@)
 	@ogr2ogr \
 		-f 'ESRI Shapefile' \
 		$@ $< \
 		-t_srs 'EPSG:4326'
 
-exports/shp/buildings/parcels/new-orleans-fullsize.shp: shp/buildings/parcels/new-orleans-crs.shp
+exports/shp/property/parcels/new-orleans-fullsize.shp: shp/property/parcels/new-orleans-crs.shp
 	@mkdir -p $(dir $@)
 	@rm -rf tmp && mkdir -p tmp
 
@@ -2349,7 +2349,7 @@ exports/shp/buildings/parcels/new-orleans-fullsize.shp: shp/buildings/parcels/ne
 
 	@rm -rf tmp
 
-exports/shp/buildings/buildings/la-osm-fullsize.shp: shp/buildings/buildings/la-osm-crs.shp
+exports/shp/property/buildings/la-osm-fullsize.shp: shp/property/buildings/la-osm-crs.shp
 
 	@mkdir -p $(dir $@)
 	@ogr2ogr \
@@ -2361,26 +2361,26 @@ exports/shp/buildings/buildings/la-osm-fullsize.shp: shp/buildings/buildings/la-
 			FROM 'la-osm-crs'"
 
 # Convert SHP to GeoJSON
-exports/geojson/buildings/parcels/new-orleans-fullsize.json: exports/shp/buildings/parcels/new-orleans-fullsize.shp
+exports/geojson/property/parcels/new-orleans-fullsize.json: exports/shp/property/parcels/new-orleans-fullsize.shp
 	@mkdir -p $(dir $@)
 	@ogr2ogr \
 		-f 'GeoJSON' \
 			$@ $<
-exports/geojson/buildings/buildings/la-osm-fullsize.json: exports/shp/buildings/buildings/la-osm-fullsize.shp
+exports/geojson/property/buildings/la-osm-fullsize.json: exports/shp/property/buildings/la-osm-fullsize.shp
 	@mkdir -p $(dir $@)
 	@ogr2ogr \
 		-f 'GeoJSON' \
 			$@ $<
 
 # Convert GeoJSON to TopoJSON
-exports/topojson/buildings/parcels/new-orleans-fullsize.json: exports/geojson/buildings/parcels/new-orleans-fullsize.json
+exports/topojson/property/parcels/new-orleans-fullsize.json: exports/geojson/property/parcels/new-orleans-fullsize.json
 	@mkdir -p $(dir $@)
 	@topojson \
 		--no-quantization \
 		--properties \
 		-o $@ \
 		-- $<
-exports/topojson/buildings/buildings/la-osm-fullsize.json: exports/geojson/buildings/buildings/la-osm-fullsize.json
+exports/topojson/property/buildings/la-osm-fullsize.json: exports/geojson/property/buildings/la-osm-fullsize.json
 	@mkdir -p $(dir $@)
 	@topojson \
 		--no-quantization \
@@ -2388,9 +2388,9 @@ exports/topojson/buildings/buildings/la-osm-fullsize.json: exports/geojson/build
 		-o $@ \
 		-- $<
 
-buildings: \
-	exports/topojson/buildings/parcels/new-orleans-fullsize.json \
-	exports/topojson/buildings/buildings/la-osm-fullsize.json
+property: \
+	exports/topojson/property/parcels/new-orleans-fullsize.json \
+	exports/topojson/property/buildings/la-osm-fullsize.json
 
 
 ###########
